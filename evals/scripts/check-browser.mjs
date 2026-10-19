@@ -19,6 +19,7 @@ const expected = await fs.readFile(path.join(directory, 'expectations.json'), 'u
 const outputs = path.join(directory, 'workspace/outputs');
 const checks = [];
 const errors = [];
+const checkErrors = [];
 const requests = [];
 let browser;
 let assetFailures = [];
@@ -34,9 +35,55 @@ const server = http.createServer(async (req, res) => {
   } catch { res.writeHead(404); res.end(); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+
+async function checkDeckNavigation(page, name, label, evidenceName) {
+  let result;
+  try {
+    await page.waitForFunction(expectedLabel => {
+      const slide = document.querySelector('.deck-slide.is-active');
+      if (!slide || slide.dataset.slideLabel !== expectedLabel) return false;
+      const rect = slide.getBoundingClientRect();
+      const content = [...slide.querySelectorAll('.headline, .chart-frame')];
+      return Math.abs(rect.x) < 1 && Math.abs(rect.y) < 1 && content.length > 0 &&
+        content.every(node => Number(getComputedStyle(node).opacity) > 0.99);
+    }, label, {timeout: 15000, polling: 100});
+    result = {name, passed: true};
+  } catch (error) {
+    result = {name, passed: false, reason: String(error)};
+  }
+  checks.push(result);
+  if (result.passed) {
+    await page.screenshot({path: path.join(directory, `${evidenceName}.png`)});
+    return true;
+  } else {
+    checkErrors.push({check: name, error: result.reason});
+    const state = await page.evaluate(() => {
+      const shell = document.querySelector('[data-deck-shell]');
+      const track = document.querySelector('[data-deck-track]');
+      return {
+        activeLabel: document.querySelector('.deck-slide.is-active')?.dataset.slideLabel,
+        index: shell?.style.getPropertyValue('--deck-index'),
+        transform: track && getComputedStyle(track).transform,
+        slides: [...document.querySelectorAll('.deck-slide')].map(slide => ({
+          label: slide.dataset.slideLabel,
+          rect: slide.getBoundingClientRect().toJSON(),
+          headlineOpacity: slide.querySelector('.headline') && getComputedStyle(slide.querySelector('.headline')).opacity,
+        })),
+        scrollX, scrollY,
+      };
+    });
+    await fs.writeFile(path.join(directory, `${evidenceName}-state.json`), JSON.stringify(state, null, 2) + '\n');
+    await page.screenshot({path: path.join(directory, `${evidenceName}-failed.png`)});
+    return false;
+  }
+}
+
 try {
   browser = await chromium.launch({ channel: 'chromium', headless: true });
-  const page = await browser.newPage({ viewport: {width: 1440, height: 1000} });
+  const page = await browser.newPage({
+    viewport: {width: 1440, height: 1000},
+    ...(metadata.runner === 'fixed-browser-smoke' ? {reducedMotion: 'reduce'} : {}),
+  });
   if (process.argv.includes('--local-assets')) {
     assetFailures = await useLocalAssets(page, `http://127.0.0.1:${server.address().port}`, path.join(root, 'evals'));
   }
@@ -75,38 +122,12 @@ try {
       const slides = page.locator('.deck-slide');
       checks.push({name:'deckSlides',passed:await slides.count() >= 2});
       const before = await page.locator('.deck-slide.is-active').getAttribute('data-slide-label');
+      const next = await slides.nth(1).getAttribute('data-slide-label');
       await page.keyboard.press('ArrowRight');
-      await page.waitForFunction(previous => document.querySelector('.deck-slide.is-active')?.dataset.slideLabel !== previous, before, {timeout:5000});
-      await page.waitForFunction(() => {
-        const slide = document.querySelector('.deck-slide.is-active');
-        const rect = slide.getBoundingClientRect();
-        return Math.abs(rect.x) < 1 && Math.abs(rect.y) < 1 &&
-          [...slide.querySelectorAll('.headline, .chart-frame')].every(node => Number(getComputedStyle(node).opacity) > 0.99);
-      }, null, {timeout:15000, polling:100});
-      checks.push({name:'deckNavigation',passed:true});
-      await page.screenshot({path:path.join(directory,'deck-next.png')});
-      await page.keyboard.press('ArrowLeft');
-      try {
-        await page.waitForFunction(previous => {
-          const slide = document.querySelector('.deck-slide.is-active');
-          const rect = slide.getBoundingClientRect();
-          return slide.dataset.slideLabel === previous && Math.abs(rect.x) < 1 && Math.abs(rect.y) < 1 && Number(getComputedStyle(slide.querySelector('.headline')).opacity) > 0.99;
-        }, before, {timeout:15000, polling:100});
-      } catch (error) {
-        const state = await page.evaluate(() => ({
-          activeLabel: document.querySelector('.deck-slide.is-active')?.dataset.slideLabel,
-          slides: [...document.querySelectorAll('.deck-slide')].map(slide => ({
-            label: slide.dataset.slideLabel,
-            rect: slide.getBoundingClientRect().toJSON(),
-            headlineOpacity: getComputedStyle(slide.querySelector('.headline')).opacity,
-          })),
-          scrollX, scrollY,
-        }));
-        await fs.writeFile(path.join(directory,'deck-return-state.json'), JSON.stringify(state,null,2) + '\n');
-        await page.screenshot({path:path.join(directory,'deck-return-failed.png')});
-        throw error;
+      if (await checkDeckNavigation(page, 'deckNavigation', next, 'deck-next')) {
+        await page.keyboard.press('ArrowLeft');
+        await checkDeckNavigation(page, 'deckReturnNavigation', before, 'deck-return');
       }
-      checks.push({name:'deckReturnNavigation',passed:true});
     }
   }
   await page.screenshot({path:path.join(directory,'screenshot.png'),fullPage:true});
@@ -145,7 +166,9 @@ try {
     }
   }
 } catch(error) {
-  errors.push(String(error));
+  const reason = String(error);
+  checks.push({name:'browserExecution',passed:false,reason});
+  checkErrors.push({check:'browserExecution',error:reason});
 } finally {
   if(browser) await browser.close();
   await new Promise(resolve => server.close(resolve));
@@ -153,7 +176,7 @@ try {
 checks.push({name:'pageErrors',passed:errors.length===0},{name:'networkErrors',passed:requests.length===0});
 if (process.argv.includes('--local-assets')) checks.push({name:'localAssets',passed:assetFailures.length===0});
 const allChecks = withRequiredChecks(checks, expected.requiredChecks);
-const result = {status:allChecks.every(check=>check.passed)?'passed':'failed',checks:allChecks,errors,requests,assetFailures,visualReview:'not-run'};
+const result = {status:allChecks.every(check=>check.passed)?'passed':'failed',checks:allChecks,errors,checkErrors,requests,assetFailures,visualReview:'not-run'};
 await fs.writeFile(path.join(directory,'browser.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify(result));
 process.exitCode=result.status==='passed'?0:1;
