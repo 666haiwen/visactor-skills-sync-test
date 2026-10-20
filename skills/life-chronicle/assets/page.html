@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title><style>html,body{margin:0;background:#eee}#page{width:max-content}#error{white-space:pre-wrap;color:#a00;padding:24px}</style>
+</head><body><main id="page" aria-label="信息图"></main><pre id="error" hidden></pre>
+<script>window.__VINFO_READY__=false;window.__VINFO_ERROR__=null;</script>
+<script src="__RUNTIME__" onerror="window.__VINFO_ERROR__='VInfo SDK 加载失败；请提供可访问的固定版本 SDK';document.getElementById('error').hidden=false;document.getElementById('error').textContent=window.__VINFO_ERROR__"></script>
+<script id="schema" type="application/json">__SCHEMA__</script>
+<script id="fonts" type="application/json">__FONTS__</script>
+<script>
+(async()=>{
+  try {
+    if(!window.VInfoGraphics)throw new Error(window.__VINFO_ERROR__||'VInfo SDK 未初始化');
+    const schema=JSON.parse(document.getElementById('schema').textContent);
+    const checked=VInfoGraphics.validatePageWithZod(schema);
+    if(!checked.success) throw new Error(JSON.stringify(checked.errors));
+    const fonts=JSON.parse(document.getElementById('fonts').textContent);
+    window.__VINFO_FONTS__=await Promise.all(fonts.map(async font=>{
+      try {
+        const face=new FontFace(font.family,font.source,font.descriptors||{});
+        await face.load();document.fonts.add(face);
+        return {family:face.family,weight:face.weight,status:face.status};
+      } catch(error) {throw new Error('字体加载失败：'+font.family+'。请提供或安装对应字体后重新渲染。'+error)}
+    }));
+    const sources=new Set();
+    const collect=value=>{if(!value||typeof value!=='object')return;for(const [key,v] of Object.entries(value)){if(key==='src'&&typeof v==='string')sources.add(v);else collect(v)}};
+    collect(schema);
+    await Promise.all([...sources].map(src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=()=>reject(new Error('图片加载失败'));img.src=src})));
+    await document.fonts.ready;
+    let renderPage=VInfoGraphics.renderPage;
+    __RENDER_SETUP__
+    const handle=renderPage(checked.data,document.getElementById('page'));
+    await handle.ready;
+    if(!document.querySelector('#page canvas'))throw new Error('没有生成画布');
+    // SDK 0.12.4 flushes embedded chart stages at 80/250/1000 ms after ready.
+    // Wait through those flushes and observe actual stable pixels, not only DOM readiness.
+    const started=performance.now();let previous='',stable=0,settled=false;
+    while(performance.now()-started<8000){
+      await new Promise(resolve=>setTimeout(resolve,200));
+      const signature=[...document.querySelectorAll('#page canvas')].map(canvas=>canvas.toDataURL()).join('|');
+      stable=signature===previous?stable+1:0;previous=signature;
+      if(performance.now()-started>=1400&&stable>=3){settled=true;break}
+    }
+    if(!settled)throw new Error('画布尚未稳定，请检查动画和图片资源');
+    window.__VINFO_READY__=true;
+  } catch(error) {
+    window.__VINFO_ERROR__=String(error);
+    const node=document.getElementById('error');node.hidden=false;node.textContent=String(error);
+  }
+})();
+</script></body></html>

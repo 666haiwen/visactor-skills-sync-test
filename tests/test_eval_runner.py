@@ -170,7 +170,14 @@ def test_custom_cli_rejects_ambiguous_selection_before_model_access(tmp_path, mo
         ("vchart-skill", None, "extended", 24, {"vchart-skill"}),
         ("vchart-skill", None, "all", 32, {"vchart-skill"}),
         ("vtable-skill", None, None, 4, {"vtable-skill"}),
-        (None, None, "all", len(runner.load_tasks()), set(runner.SKILLS)),
+        # Runtime skills may be installed before fixed model cases are added.
+        (
+            None,
+            None,
+            "all",
+            len(runner.load_tasks()),
+            {task["skill"] for task in runner.load_tasks()},
+        ),
         (None, ["vtable-list"], None, 1, {"vtable-skill"}),
     ],
 )
