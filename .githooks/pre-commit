@@ -10,5 +10,5 @@ if git diff --cached --name-only --diff-filter=ACMR |
     echo "Install uv and add it to PATH before committing Python changes." >&2
     exit 1
   fi
-  uv run --locked ruff check skills tests evals/scripts
+  uv run --locked ruff check skills tests
 fi

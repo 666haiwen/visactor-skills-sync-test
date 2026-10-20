@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { withRequiredChecks } from '../evals/scripts/browser-checks.mjs';
+import { withRequiredChecks } from './browser/scripts/browser-checks.mjs';
 
 test('an omitted declared acceptance check fails the report', () => {
   const checks = [{name: 'pageErrors', passed: true}];
@@ -17,7 +17,7 @@ test('declared checks keep their observed results and do not mutate the input', 
   assert.notEqual(result, checks);
 });
 
-test('existing model cases without a required-check list retain their checks', () => {
+test('omitting the optional required-check list preserves observed checks', () => {
   assert.deepEqual(withRequiredChecks([{name: 'pageErrors', passed: true}]), [
     {name: 'pageErrors', passed: true},
   ]);

@@ -30,7 +30,7 @@ Image replication, React-specific flows and multi-turn editing remain included w
 
 ## Expanded VChart case selection (2026-09-18)
 
-The user approved selecting cases by target capability, distinct failure mode, public/complete input, meaningful acceptance criteria and maintenance cost. [The coverage table](../../evals/cases/README.md) records 32 VChart tasks: 24 adapted from the old blind pool, 2 from website regression intents, 2 migration baselines and 4 supplements. Four VTable tasks remain separate.
+The user approved selecting cases by target capability, distinct failure mode, public/complete input, meaningful acceptance criteria and maintenance cost. The historical coverage table (`evals/cases/README.md`) records 32 VChart tasks: 24 adapted from the old blind pool, 2 from website regression intents, 2 migration baselines and 4 supplements. Four VTable tasks remain separate.
 
 - [x] Record source ids/prompts, adaptations, selection reasons and deferred candidates.
 - [x] Bundle synthetic inputs and a self-authored image fixture; hide checker expectations from the task workspace.

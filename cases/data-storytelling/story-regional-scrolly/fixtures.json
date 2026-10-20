@@ -1,0 +1,10 @@
+{
+  "margin_steps.csv": {
+    "sha256": "6103bf7cef5a2676aca30f326f40c5a255ec6c7b0a1a4aa610ff67a494d30069",
+    "provenance": "Synthetic evaluation data; MIT; not factual reporting data."
+  },
+  "regional_margin.csv": {
+    "sha256": "a87dd77110f85847072a0411ffe83d05ff0fdff81b9bfc1841dce09f0d38a1a2",
+    "provenance": "Synthetic evaluation data; MIT; not factual reporting data."
+  }
+}
