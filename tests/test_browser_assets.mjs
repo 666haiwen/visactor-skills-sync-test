@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { test } from 'node:test';
-import { assetPath } from '../evals/scripts/local-browser-assets.mjs';
+import { assetPath } from './browser/scripts/local-browser-assets.mjs';
 
 const modules = path.resolve('node_modules');
 const versions = { '@visactor/vchart': '2.1.7', '@visactor/vtable': '1.26.8' };

@@ -8,8 +8,8 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_evaluation_lockfile_uses_public_npm_registry():
-    lock = json.loads((ROOT / "evals/package-lock.json").read_text())
+def test_browser_lockfile_uses_public_npm_registry():
+    lock = json.loads((ROOT / "tests/browser/package-lock.json").read_text())
     resolved = [
         package["resolved"] for package in lock["packages"].values() if "resolved" in package
     ]

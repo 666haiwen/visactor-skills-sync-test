@@ -13,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture
 def smoke(monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "evals/scripts"))
-    spec = importlib.util.spec_from_file_location("smoke_runner", ROOT / "evals/scripts/smoke.py")
+    monkeypatch.syspath_prepend(str(ROOT / "tests/browser/scripts"))
+    spec = importlib.util.spec_from_file_location("smoke_runner", ROOT / "tests/browser/scripts/smoke.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -23,7 +23,7 @@ def smoke(monkeypatch):
 @pytest.fixture
 def catalog(tmp_path):
     directory = tmp_path / "data-storytelling/custom-story"
-    shutil.copytree(ROOT / "evals/smoke/data-storytelling/story-html", directory)
+    shutil.copytree(ROOT / "tests/browser/cases/data-storytelling/story-html", directory)
     return tmp_path, directory
 
 
@@ -131,7 +131,7 @@ def test_list_needs_no_browser_or_credentials_and_creates_no_evidence(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "evals/scripts/smoke.py"),
+            str(ROOT / "tests/browser/scripts/smoke.py"),
             "--skill",
             "data-storytelling",
             "--list",

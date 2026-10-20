@@ -69,7 +69,7 @@ After installation, ask your agent to use the selected Skill with your data. For
 
 Data-storytelling uses the current agent to author VSeed configurations and local scripts to assemble the output; it needs no hosted chart generation service. Images use host capabilities or the declared fallback. Web-PPT is a browser presentation, not a `.pptx` file.
 
-Generated JavaScript/HTML is executable code. Preview your own or reviewed artifacts locally; the evaluation browser is not a sandbox for arbitrary untrusted submissions.
+Generated JavaScript/HTML is executable code. Preview your own or reviewed artifacts locally; the test browser is not a sandbox for arbitrary untrusted submissions.
 
 ## Examples
 
@@ -87,12 +87,13 @@ This section is for contributors editing Skills or running local tests. The defa
 | `tests/<skill_name>/` | Skill-specific deterministic Python regressions; hyphens become underscores for Python imports |
 | `tests/test_*` | Shared tooling/installation checks and Node.js browser/Story integration tests |
 | `examples/<skill-name>/<case-name>/` | Curated examples with prompts, inputs, results and previews |
-| `evals/cases/<skill-name>/` | Model task prompts, inputs and acceptance criteria |
-| `evals/smoke/<skill-name>/<case-id>/` | Fixed browser cases: configuration, inputs and expectations |
-| `evals/scripts/` | Shared task runners and browser checks |
+| `cases/<skill-name>/<case-name>/` | Fixed Agent prompts, inputs and acceptance guidance |
+| `tests/browser/cases/<skill-name>/<case-id>/` | Fixed browser cases: configuration, inputs and expectations |
+| `tests/browser/scripts/` | Browser smoke builds and checks; dependencies are pinned in `tests/browser/` |
+| `.cache/skill-dev/<skill-name>/<run-name>/` | Ignored local workspaces, outputs, screenshots and logs |
 | `docs/` | Contributor references; `docs/migration/` contains historical migration records |
 
-Keep each runtime Skill self-contained. It must not depend on `tests/`, `evals/` or another Skill's local directory. See [contribution conventions](CONTRIBUTING.md#adding-or-updating-a-skill) for adding Skills and selecting checks.
+Keep each runtime Skill self-contained. It must not depend on `tests/`, `cases/`, `examples/` or another Skill's local directory. See [contribution conventions](CONTRIBUTING.md#adding-or-updating-a-skill) for adding Skills and selecting checks.
 
 ### Install from a local checkout
 
@@ -113,16 +114,16 @@ The Python maintenance environment requires Python 3.12+ and [uv](https://docs.a
 ```bash
 uv sync --locked
 uv run pytest tests -q
-uv run ruff check skills tests evals/scripts
+uv run ruff check skills tests
 ```
 
-Fixed browser smoke cases are maintained by Skill in [evals/smoke/](evals/smoke/README.md), with each case's configuration, inputs and acceptance criteria together. Run all with `uv run python evals/scripts/smoke.py`, or select `--skill data-storytelling` / `--case story-ppt` after the browser setup in that guide.
+Fixed browser cases live under [tests/browser/cases/](tests/browser/cases/README.md), with configuration, inputs and acceptance criteria together. After the browser setup in that guide, run `uv run python tests/browser/scripts/smoke.py`, or select `--skill data-storytelling` / `--case story-ppt`. These checks do not call a model.
 
-### Model API task debugging
+### Skill task debugging
 
-A lightweight harness can load a selected Skill through OpenAI-compatible Chat Completions, run fixed or custom tasks, and retain request, tool, usage and artifact logs. It provides file/image tools and an allowlist of data-storytelling scripts. It has no script adapters for editorial-magazine or life-chronicle; use Codex or Claude Code for their full workflows and for end-to-end data storytelling.
+Use Codex, Claude Code or another compatible mature agent to run a [fixed task](cases/README.md) or your own prompt and inputs. Follow [local debugging](docs/debugging.md) to prepare an ignored `.cache/skill-dev/<skill-name>/<run-name>/` workspace and retain artifacts, screenshots and available logs. This repository does not provide a model API harness or unified agent runner.
 
-See the [evaluation guide](evals/README.md) for setup and commands. The [case catalog](evals/cases/README.md) currently contains data-storytelling tasks; browser smoke covers its HTML stories and Web-PPT. The other Skills have script regressions, but no fixed model tasks or browser smoke yet. Model tasks are excluded from CI and may incur provider charges.
+Fixed tasks currently cover data-storytelling; browser smoke covers its HTML stories and Web-PPT. Editorial-magazine and life-chronicle have script regressions, but no fixed tasks or browser smoke yet. Review generated results for data accuracy, task requirements and interactions; different correct visual designs are acceptable. Agent tasks are not run in CI.
 
 ## Versioning
 

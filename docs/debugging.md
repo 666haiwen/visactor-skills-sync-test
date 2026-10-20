@@ -1,22 +1,22 @@
-# Debug Skills
+# Debug Skills locally
 
-## Recommended: Codex or Claude Code
+Use a mature agent such as Codex or Claude Code for Skill development. The host provides model access, tools and conversation management. Other compatible agents, including 豆包工作, can use their own Skill installation flow; dedicated setup instructions here cover Codex and Claude Code.
 
-Use your existing coding agent for everyday development and debugging. It provides the model, tool execution and conversation management; this repository supplies the Skill. Codex and Claude Code are the documented host targets. Other compatible agents may work, but do not have dedicated setup instructions or compatibility guarantees here.
+## Create a workspace
 
-Both hosts load complete Skill directories. Codex uses `.agents/skills/` in a project; Claude Code uses `.claude/skills/`. See the [official Codex instructions](https://learn.chatgpt.com/docs/build-skills) and [Claude Code instructions](https://code.claude.com/docs/en/skills).
-
-The example below uses data-storytelling and its CSV fixture. To debug editorial-magazine or life-chronicle, copy that complete Skill directory instead, provide your own prompt/source assets, and install its `requirements.txt` and browser dependencies in a separate environment. Those Skills currently have deterministic regressions but no fixed model cases or browser smoke.
-
-The following local setup uses a fresh directory so it does not overwrite an existing Skill installation. Start in this repository's root, with your chosen agent installed and authenticated:
+Start from this repository's root. Keep each experiment in its own ignored `.cache/skill-dev/<skill-name>/<run-name>/` directory:
 
 ```bash
-debug_workspace="$(mktemp -d)"
-mkdir -p "$debug_workspace/inputs" "$debug_workspace/outputs"
-cp evals/cases/data-storytelling/inputs/monthly_retention.csv "$debug_workspace/inputs/"
+mkdir -p .cache/skill-dev/data-storytelling
+debug_workspace="$(mktemp -d "$PWD/.cache/skill-dev/data-storytelling/run.XXXXXX")"
+mkdir -p "$debug_workspace/outputs" "$debug_workspace/screenshots" "$debug_workspace/logs"
+cp -R cases/data-storytelling/story-retention-html/inputs "$debug_workspace/inputs"
+cp cases/data-storytelling/story-retention-html/prompt.md "$debug_workspace/prompt.md"
 ```
 
-Choose one host. For **Codex**:
+Only copy the prompt and inputs for generation. Leave the case README's acceptance criteria in the repository for review after the task. For your own task, put its prompt and source files in the same workspace structure.
+
+Choose one host, installed and authenticated. For **Codex**:
 
 ```bash
 mkdir -p "$debug_workspace/.agents/skills"
@@ -34,41 +34,21 @@ cd "$debug_workspace"
 claude
 ```
 
-You can also open that workspace in the corresponding app. Data-storytelling needs Python 3.10+ and Node.js for JS checks, and generated HTML needs a browser and public CDN access. The API harness, uv environment and its model configuration are not required for this path.
+You can open the workspace in the corresponding app. Install the complete Skill, including references, templates and scripts. See the [Codex Skill documentation](https://developers.openai.com/codex/skills/) and [Claude Code Skill documentation](https://code.claude.com/docs/en/skills) for host-specific discovery.
 
-In Codex CLI, send:
+Ask the agent to use `data-storytelling` to execute `prompt.md`, read inputs from `inputs/` and write generated files to `outputs/`. For another Skill, change the Skill name and supply its task and assets. See the root [runtime requirements](../README.md#install); install any required packages in a local environment under `.cache/`.
 
-```text
-$data-storytelling Analyze every row in inputs/monthly_retention.csv and create an HTML data story. Write the plan, intermediate files and final HTML under outputs/.
-```
+## Iterate and keep evidence
 
-In Claude Code, send the same request with `/data-storytelling` instead of `$data-storytelling`. Inspect the generated source and HTML, then continue the conversation with changes or errors to investigate.
+- Edit source instructions and scripts in `skills/<skill-name>/`. Refresh the installed copy before each retest, or create a fresh workspace. Changing only the installed copy will not update the repository source.
+- Keep fixed inputs in `cases/` unchanged during a run. Work on the copied inputs when a task requires transformation.
+- Save generated artifacts under `outputs/`, screenshots under `screenshots/` and available session/tool logs under `logs/`. Host logs are not collected automatically by this repository; export them where supported and note missing evidence.
+- Use `notes.md` to record the Skill commit and any local changes, host/model, task outcome, checks, failures and manual review. Keep a Skill snapshot or diff with the run when reproducing an uncommitted version.
+- Open the output in a browser and exercise required interactions. Check the case's acceptance points after generation. A rendered page alone does not establish data or visual correctness.
+- `.cache/` is ignored by Git. Keep credentials and private material out of shared reports. Clean only workspaces you own; do not delete another session's files automatically.
 
-After editing this repository's Skill, refresh the installed copy before retesting (or create another fresh workspace with these steps). Record the host/model, prompt, inputs and observed result when reporting a problem. Logs and tool access in this route are managed by the host; they do not automatically appear in `evals/runs/`.
+Promote reusable task inputs and acceptance criteria to [cases/](../cases/README.md), reviewed showcase results to [examples/](../examples/README.md), and deterministic regressions to `tests/`. Keep raw logs, draft outputs and experimental screenshots local.
 
-Historical generation/browser runs in this migration used Codex. Claude Code's setup above follows its documented Skill interface; a real Claude Code generation run has not yet been recorded for this migration.
+## Automated checks
 
-## Alternative: a simple model API harness
-
-Use this when you have an API endpoint and want to investigate a bounded task or a bundled Story script. It loads the selected Skill and provides a limited tool loop. File/image tools are available to all Skills; bundled-script execution is allowlisted only for data-storytelling, with no editorial-magazine or life-chronicle adapters. The harness has not completed a live end-to-end Story evaluation. Use Codex or Claude Code for data-storytelling end-to-end tasks, multi-step debugging and everyday interactive work. Only OpenAI-compatible Chat Completions with tool calling and token usage is supported; native protocols are outside the current scope.
-
-Follow [API setup](../evals/README.md#contributor-quickstart) to configure your endpoint, model and key environment variable. Run a built-in case with:
-
-```bash
-uv run python evals/scripts/run.py --case story-retention-html --browser
-```
-
-Or supply a task without editing the case catalogue:
-
-```bash
-uv run python evals/scripts/run.py \
-  --skill data-storytelling \
-  --prompt-file evals/examples/story-prompt.md \
-  --input evals/cases/data-storytelling/inputs/monthly_retention.csv
-```
-
-Replace the prompt/data paths with your own files. Relative paths are resolved from your shell's current directory. Each `--input` is copied into `inputs/<filename>`; repeat the flag for multiple files with distinct basenames. Inputs are optional for explanatory tasks. All generated artifacts go to the run workspace's `outputs/`.
-
-`--html` names an output HTML path relative to `outputs/`; the runner includes it in the task instructions and checks that it exists. With `--browser`, this path is required and rendering checks/screenshots run after generation. Omit both flags for text answers or tasks you will inspect yourself. Custom runs check process completion and a nonempty final answer, plus any explicitly requested HTML/browser checks; they do not invent case-specific semantic or data assertions. Success remains `needs-review`.
-
-Each invocation creates `evals/runs/<run-id>/custom/` with the same prompt, Skill snapshot, input hashes, API request/response/tool logs, usage, outputs and report format as fixed cases. The original prompt and input files are not edited. Runs are independent; for conversational debugging, use Codex or Claude Code.
+Use the [contribution guide](../CONTRIBUTING.md) to select script regressions and [browser smoke](../tests/browser/cases/README.md). These checks run without a model. Actual task execution and review use your chosen agent; there is no repository model API configuration or batch agent runner.

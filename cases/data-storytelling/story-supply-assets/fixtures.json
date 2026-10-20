@@ -1,0 +1,10 @@
+{
+  "buffer_gap.csv": {
+    "sha256": "52ce474dde942f2864175407b446ba092c6ef986c7c58861d831660e39057359",
+    "provenance": "Synthetic evaluation data; MIT; not factual reporting data."
+  },
+  "risk_nodes.csv": {
+    "sha256": "4ae625c7bafa91d8a925f01808e4d39791c16c8533561733510414e3347ecabb",
+    "provenance": "Synthetic evaluation data; MIT; not factual reporting data."
+  }
+}

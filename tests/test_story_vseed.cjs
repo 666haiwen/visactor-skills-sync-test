@@ -1,6 +1,6 @@
 // Regress local theme merging and Skill assembly with the pinned VSeed UMD.
 // VSeed's own chart/annotation/coordinate behavior belongs in its library tests.
-// npm ci --prefix evals && node --test tests/test_story_vseed.cjs
+// npm ci --prefix tests/browser && node --test tests/test_story_vseed.cjs
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
@@ -9,7 +9,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 // Load the browser UMD contract independent of the npm package's ESM metadata.
 const bundle = {exports: {}};
-const filename = path.resolve(__dirname, '../evals/node_modules/@visactor/vseed/dist/umd/index.js');
+const filename = path.resolve(__dirname, './browser/node_modules/@visactor/vseed/dist/umd/index.js');
 vm.runInThisContext('(function(module,exports){' + fs.readFileSync(filename, 'utf8') + '\n})', {filename})(bundle, bundle.exports);
 const runtime = bundle.exports;
 runtime.registerAll();

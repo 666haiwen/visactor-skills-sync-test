@@ -27,7 +27,7 @@ jobs:
           python-version: '3.12'
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run --locked ruff check skills tests evals/scripts
+      - run: uv run --locked ruff check skills tests
       - run: uv run --locked pytest tests -q
 
   browser:
@@ -46,13 +46,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: evals/package-lock.json
+          cache-dependency-path: tests/browser/package-lock.json
           registry-url: https://registry.npmjs.org
       - run: uv sync --locked
-      - run: npm ci --prefix evals --ignore-scripts --no-audit --no-fund
-      - run: node evals/node_modules/playwright/cli.js install --with-deps chromium
+      - run: npm ci --prefix tests/browser --ignore-scripts --no-audit --no-fund
+      - run: node tests/browser/node_modules/playwright/cli.js install --with-deps chromium
       - run: node --test tests/test_browser_assets.mjs tests/test_browser_checks.mjs tests/test_story_vseed.cjs
-      - run: uv run --locked python evals/scripts/smoke.py --output-dir .cache/ci-browser-smoke
+      - run: uv run --locked python tests/browser/scripts/smoke.py --output-dir .cache/ci-browser-smoke
       - name: Save browser evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

@@ -69,7 +69,7 @@ npx skills add VisActor/VTable --skill vtable-development-assistant
 
 data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装；不依赖托管图表生成服务。图片生成使用宿主能力，没有生图工具时采用计划声明的 fallback。Web-PPT 是浏览器演示稿，不是 `.pptx`。
 
-生成的 JavaScript/HTML 是可执行代码。请在本地预览自己生成或已审查的产物；评测浏览器并不是用于执行任意不可信提交的安全沙箱。
+生成的 JavaScript/HTML 是可执行代码。请在本地预览自己生成或已审查的产物；测试浏览器并不是用于执行任意不可信提交的安全沙箱。
 
 ## 案例展示
 
@@ -87,12 +87,13 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 | `tests/<skill_name>/` | 按 Skill 组织的确定性 Python 回归测试；为兼容 Python 导入，连字符改为下划线 |
 | `tests/test_*` | 共用工具与安装检查，以及 Node.js 浏览器／Story 集成测试 |
 | `examples/<skill-name>/<case-name>/` | 面向用户的精选案例：提示词、输入、结果与预览 |
-| `evals/cases/<skill-name>/` | 模型任务的提示词、输入与验收标准 |
-| `evals/smoke/<skill-name>/<case-id>/` | 固定浏览器用例的配置、输入与验收标准 |
-| `evals/scripts/` | 共用任务执行器与浏览器检查 |
+| `cases/<skill-name>/<case-name>/` | 固定 Agent 任务的提示词、输入与验收要点 |
+| `tests/browser/cases/<skill-name>/<case-id>/` | 固定浏览器用例的配置、输入与验收标准 |
+| `tests/browser/scripts/` | 浏览器 smoke 构建与检查；依赖固定在 `tests/browser/` |
+| `.cache/skill-dev/<skill-name>/<run-name>/` | 已忽略的本地工作目录、产物、截图与日志 |
 | `docs/` | 贡献者参考文档；`docs/migration/` 为历史迁移记录 |
 
-每个运行时 Skill 都需要自包含，不依赖 `tests/`、`evals/` 或另一个 Skill 的本地目录。新增 Skill 与选择验证范围的约定见[贡献指南](CONTRIBUTING.md#adding-or-updating-a-skill)。
+每个运行时 Skill 都需要自包含，不依赖 `tests/`、`cases/`、`examples/` 或另一个 Skill 的本地目录。新增 Skill 与选择验证范围的约定见[贡献指南](CONTRIBUTING.md#adding-or-updating-a-skill)。
 
 ### 从本地仓库安装
 
@@ -113,16 +114,16 @@ Python 维护环境要求 Python 3.12+ 和 [uv](https://docs.astral.sh/uv/)：
 ```bash
 uv sync --locked
 uv run pytest tests -q
-uv run ruff check skills tests evals/scripts
+uv run ruff check skills tests
 ```
 
-固定浏览器 smoke 用例按 Skill 集中在 [evals/smoke/](evals/smoke/README.zh-CN.md)，每个用例的配置、输入和验收文件放在一起。按指南准备浏览器后，用 `uv run python evals/scripts/smoke.py` 执行全部用例，也可通过 `--skill data-storytelling` 或 `--case story-ppt` 单独选择。
+固定浏览器用例按 Skill 集中在 [tests/browser/cases/](tests/browser/cases/README.zh-CN.md)，每个用例的配置、输入和验收文件放在一起。按指南准备浏览器后，用 `uv run python tests/browser/scripts/smoke.py` 执行全部用例，也可通过 `--skill data-storytelling` 或 `--case story-ppt` 单独选择。这些检查不调用模型。
 
-### 通过模型 API 调试任务
+### Skill 任务调试
 
-轻量 harness 可通过 OpenAI 兼容的 Chat Completions 接口加载本仓库 Skill，执行固定用例或自定义任务，并保存请求、工具调用、用量和产物日志。它提供文件与图片工具，以及 data-storytelling 脚本白名单。目前没有 editorial-magazine 或 life-chronicle 的脚本适配；这两者的完整流程与数据叙事端到端任务，请使用 Codex 或 Claude Code。
+使用 Codex、Claude Code 或其他兼容的成熟 Agent 执行[固定任务](cases/README.md)，也可以提供自己的提示词和输入。按[本地调试指南](docs/debugging.md)建立已忽略的 `.cache/skill-dev/<skill-name>/<run-name>/` 工作目录，保留产物、截图及可导出的日志。仓库不提供模型 API harness 或统一 Agent 执行器。
 
-配置和运行方式见 [评测说明](evals/README.zh-CN.md)。[用例目录](evals/cases/README.zh-CN.md) 目前覆盖 data-storytelling，浏览器 smoke 覆盖其 HTML 故事和 Web-PPT。其他 Skills 已有脚本回归测试，尚无固定模型任务或浏览器 smoke。模型任务不在 CI 中运行，调用模型可能产生费用。
+固定任务目前覆盖 data-storytelling，浏览器 smoke 覆盖其 HTML 故事和 Web-PPT。editorial-magazine 和 life-chronicle 已有脚本回归，尚无固定任务或浏览器 smoke。任务完成后检查数据准确性、要求和实际交互，允许不同的正确视觉表达。Agent 任务不在 CI 中运行。
 
 ## 版本管理
 
