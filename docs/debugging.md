@@ -6,6 +6,8 @@ Use your existing coding agent for everyday development and debugging. It provid
 
 Both hosts load complete Skill directories. Codex uses `.agents/skills/` in a project; Claude Code uses `.claude/skills/`. See the [official Codex instructions](https://learn.chatgpt.com/docs/build-skills) and [Claude Code instructions](https://code.claude.com/docs/en/skills).
 
+The example below uses data-storytelling and its CSV fixture. To debug editorial-magazine or life-chronicle, copy that complete Skill directory instead, provide your own prompt/source assets, and install its `requirements.txt` and browser dependencies in a separate environment. Those Skills currently have deterministic regressions but no fixed model cases or browser smoke.
+
 The following local setup uses a fresh directory so it does not overwrite an existing Skill installation. Start in this repository's root, with your chosen agent installed and authenticated:
 
 ```bash
@@ -48,7 +50,7 @@ Historical generation/browser runs in this migration used Codex. Claude Code's s
 
 ## Alternative: a simple model API harness
 
-Use this when you have an API endpoint and want to investigate a bounded task or a bundled Story script. It loads the selected Skill and provides a limited tool loop; it has not completed a live end-to-end Story evaluation. Use Codex or Claude Code for data-storytelling end-to-end tasks, multi-step debugging and everyday interactive work. Only OpenAI-compatible Chat Completions with tool calling and token usage is supported; native protocols are outside the current scope.
+Use this when you have an API endpoint and want to investigate a bounded task or a bundled Story script. It loads the selected Skill and provides a limited tool loop. File/image tools are available to all Skills; bundled-script execution is allowlisted only for data-storytelling, with no editorial-magazine or life-chronicle adapters. The harness has not completed a live end-to-end Story evaluation. Use Codex or Claude Code for data-storytelling end-to-end tasks, multi-step debugging and everyday interactive work. Only OpenAI-compatible Chat Completions with tool calling and token usage is supported; native protocols are outside the current scope.
 
 Follow [API setup](../evals/README.md#contributor-quickstart) to configure your endpoint, model and key environment variable. Run a built-in case with:
 

@@ -8,6 +8,8 @@ For everyday Skill development, **start with Codex or Claude Code**; see the [di
 
 GitHub CI runs deterministic regressions and fixed browser smoke tests only. It does not run the model tasks below. Browser cases keep their configuration, inputs and acceptance criteria together by Skill in [smoke/](smoke/README.md); that guide covers commands and adding cases. See also [Continuous integration](../CONTRIBUTING.md#continuous-integration).
 
+Fixed model catalogs and browser smoke currently cover only data-storytelling. All installed Skills can be selected for custom tasks, but API `run_skill_script` only executes allowlisted data-storytelling scripts. Editorial-magazine and life-chronicle have no API script adapters; use Codex or Claude Code for their complete workflows. Their deterministic helper tests live in `tests/editorial_magazine/` and `tests/life_chronicle/`.
+
 ## Contributor quickstart
 
 Run commands from the repository root. The runner copies the current checkout's selected Skill into each task workspace; no global Skill installation is needed.

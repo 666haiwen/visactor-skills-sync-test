@@ -6,13 +6,22 @@ Agent skills for the VisActor visualization ecosystem. Create data stories, edit
 
 ## Skills
 
-| Skill | Tasks | Source |
+### Maintained in this repository
+
+| Skill | Tasks |
+| --- | --- |
+| [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
+
+### Related VisActor Skills
+
+Chart and table Skills are maintained in their library repositories. Install them directly from the source:
+
+| Skill | Tasks | Repository |
 | --- | --- | --- |
 | [VChart Skill](https://github.com/VisActor/VChart/blob/develop/skills/vchart-development-assistant/SKILL.md) | Chart generation, diagnosis, image replication and React integration | [VisActor/VChart](https://github.com/VisActor/VChart) |
 | [VTable Skill](https://github.com/VisActor/VTable/blob/develop/skills/vtable-development-assistant/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis | [VisActor/VTable](https://github.com/VisActor/VTable) |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT | This repository |
-| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers | This repository |
-| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines | This repository |
 
 Each skill includes its instructions, local references, templates and scripts. No separate VisActor CLI, MCP server, model key or hosted VisActor API is required. The host agent supplies the model.
 
@@ -23,39 +32,67 @@ Each skill includes its instructions, local references, templates and scripts. N
 Run these commands in the project where you want to use the Skills:
 
 ```bash
-npx skills add VisActor/VChart --skill vchart-development-assistant
-npx skills add VisActor/VTable --skill vtable-development-assistant
 npx skills add VisActor/skills --skill data-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
+```
+
+For chart and table tasks, install the related Skills from their owning repositories:
+
+```bash
+npx skills add VisActor/VChart --skill vchart-development-assistant
+npx skills add VisActor/VTable --skill vtable-development-assistant
 ```
 
 Follow the installer's prompts to select Codex or Claude Code. You can install each Skill independently. More installation options are documented in the [Skills CLI reference](https://github.com/vercel-labs/skills#usage).
 
 Requirements:
 
-- Node.js and npm to run the installation commands above.
-- An agent with filesystem and shell tools, plus its own model access.
-- Python 3.10+ and Node.js (JavaScript validation) for data-storytelling. Python scripts use the standard library. See the upstream repositories for VChart/VTable Skill requirements.
-- A browser and internet access for generated HTML. Data-storytelling loads pinned VSeed, VChart, VTable and GSAP packages from the public unpkg CDN.
+- Node.js and npm for installation; a host agent with filesystem/shell tools and its own model access.
+- A browser and network access to preview generated HTML and load external assets.
 
-Editorial magazines and biography posters additionally require Python 3.10+, Pillow, Playwright and Chromium/Chrome; install the selected Skill's `requirements.txt`. Fonts load from a Feishu CDN mirror with system fallbacks. Life Chronicle also loads a pinned VInfo SDK; see its [environment guide](skills/life-chronicle/references/environment.md). Image search, generation and cutout tools come from the host. Magazine templates contain placeholders that must be replaced for delivery.
+| Skill | Runtime requirements |
+| --- | --- |
+| data-storytelling | Python 3.10+ (standard library) and Node.js for JavaScript checks; pinned VSeed, VChart, VTable and GSAP load from unpkg |
+| editorial-magazine | Python 3.10+, dependencies in its [requirements.txt](skills/editorial-magazine/requirements.txt), and Chromium/Chrome for PNG export; font CDN with system fallbacks |
+| life-chronicle | Python 3.10+, dependencies in its [requirements.txt](skills/life-chronicle/requirements.txt), and Chromium/Chrome for PNG export; pinned VInfo and font CDN, see [environment setup](skills/life-chronicle/references/environment.md) |
+
+Image search, generation and cutout capabilities come from the host; follow the selected Skill's asset requirements. Magazine templates contain placeholders to replace before delivery. See the owning repositories for VChart/VTable Skill requirements.
 
 ## Use
 
 After installation, ask your agent to use the selected Skill with your data. For example:
 
-- “Use VChart to compare sales by region and quarter in this CSV. Give me the editable source and HTML.”
-- “Use VTable to build a sortable detail table using every row in this file.”
 - “Use data-storytelling to explain retention changes in this CSV to our growth lead as a shareable HTML story.”
+- “Use editorial-magazine to turn this article and its sources into an editable HTML and PNG image series.”
+- “Use life-chronicle to create a biography poster from these sourced events and photos, with editable timeline text.”
 
 Data-storytelling uses the current agent to author VSeed configurations and local scripts to assemble the output; it needs no hosted chart generation service. Images use host capabilities or the declared fallback. Web-PPT is a browser presentation, not a `.pptx` file.
 
 Generated JavaScript/HTML is executable code. Preview your own or reviewed artifacts locally; the evaluation browser is not a sandbox for arbitrary untrusted submissions.
 
+## Examples
+
+The [example gallery](examples/README.md) includes a CO₂ scrolling story and a Las Vegas Web-PPT, with prompts, available inputs, final artifacts and previews.
+
 ## Development and maintenance
 
 This section is for contributors editing Skills or running local tests. The default and primary maintenance branch is `develop`. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `skills/<skill-name>/` | Independently installable runtime: `SKILL.md`, references, templates/assets and scripts |
+| `tests/<skill_name>/` | Skill-specific deterministic Python regressions; hyphens become underscores for Python imports |
+| `tests/test_*` | Shared tooling/installation checks and Node.js browser/Story integration tests |
+| `examples/<skill-name>/<case-name>/` | Curated examples with prompts, inputs, results and previews |
+| `evals/cases/<skill-name>/` | Model task prompts, inputs and acceptance criteria |
+| `evals/smoke/<skill-name>/<case-id>/` | Fixed browser cases: configuration, inputs and expectations |
+| `evals/scripts/` | Shared task runners and browser checks |
+| `docs/` | Contributor references; `docs/migration/` contains historical migration records |
+
+Keep each runtime Skill self-contained. It must not depend on `tests/`, `evals/` or another Skill's local directory. See [contribution conventions](CONTRIBUTING.md#adding-or-updating-a-skill) for adding Skills and selecting checks.
 
 ### Install from a local checkout
 
@@ -83,13 +120,15 @@ Fixed browser smoke cases are maintained by Skill in [evals/smoke/](evals/smoke/
 
 ### Model API task debugging
 
-A lightweight harness can load this repository's Skill through OpenAI-compatible Chat Completions, run fixed or custom tasks, and retain request, tool, usage and artifact logs. Use it for bounded script/task debugging; end-to-end data storytelling is recommended in Codex or Claude Code.
+A lightweight harness can load a selected Skill through OpenAI-compatible Chat Completions, run fixed or custom tasks, and retain request, tool, usage and artifact logs. It provides file/image tools and an allowlist of data-storytelling scripts. It has no script adapters for editorial-magazine or life-chronicle; use Codex or Claude Code for their full workflows and for end-to-end data storytelling.
 
-See the [evaluation guide](evals/README.md) for setup and commands. The [case catalog](evals/cases/README.md) contains five data-storytelling tasks; browser smoke covers HTML stories and Web-PPT. Model tasks are excluded from CI and may incur provider charges.
+See the [evaluation guide](evals/README.md) for setup and commands. The [case catalog](evals/cases/README.md) currently contains data-storytelling tasks; browser smoke covers its HTML stories and Web-PPT. The other Skills have script regressions, but no fixed model tasks or browser smoke yet. Model tasks are excluded from CI and may incur provider charges.
 
 ## Versioning
 
 Skills maintained here are versioned together at repository level. Each formal Skills release is identified by a Git tag covering the Skill instructions, references, templates and scripts. VChart and VTable Skill versions are managed by their respective repositories.
+
+Ordinary edits are identified by Git commits; each Skill change does not require a release tag.
 
 Use a release tag or commit SHA to identify the version when reporting an issue or reproducing a result; branch contents can change. Dependency versions such as VTable `1.26.8` identify the underlying library, not the Skill release. Historical VMind SDK tags remain unchanged and belong to the earlier SDK.
 

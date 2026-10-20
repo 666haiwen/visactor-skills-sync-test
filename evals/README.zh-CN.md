@@ -8,6 +8,8 @@
 
 GitHub CI 只运行确定性回归和固定配置的浏览器 smoke，不执行下文的模型任务。浏览器用例按 Skill 在 [smoke/](smoke/README.zh-CN.md) 集中维护配置、输入与验收标准，运行命令及新增方式见该指南；另见 [持续集成说明](../CONTRIBUTING.md#continuous-integration)。
 
+当前固定模型任务和浏览器 smoke 只覆盖 data-storytelling。自定义任务可以选择任意已收录的 Skill，但 API 的 `run_skill_script` 仅执行白名单中的 data-storytelling 脚本。editorial-magazine 和 life-chronicle 尚无 API 脚本适配，完整流程请使用 Codex 或 Claude Code；其确定性脚本回归分别位于 `tests/editorial_magazine/` 和 `tests/life_chronicle/`。
+
 ## 贡献者快速上手
 
 以下命令均在仓库根目录执行。runner 会将当前工作副本中选定的 Skill 复制到每个任务的工作区，无需预先全局安装 Skill。

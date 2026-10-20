@@ -6,13 +6,22 @@
 
 ## Skills
 
-| Skill | 能力 | 维护位置 |
+### 本仓库维护
+
+| Skill | 能力 |
+| --- | --- |
+| [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 |
+
+### VisActor 相关 Skills
+
+图表与表格 Skill 在各自的库仓库中维护，可直接从源仓库安装：
+
+| Skill | 能力 | 仓库 |
 | --- | --- | --- |
 | [VChart Skill](https://github.com/VisActor/VChart/blob/develop/skills/vchart-development-assistant/SKILL.md) | 图表生成、问题诊断、图片还原和 React 集成 | [VisActor/VChart](https://github.com/VisActor/VChart) |
 | [VTable Skill](https://github.com/VisActor/VTable/blob/develop/skills/vtable-development-assistant/SKILL.md) | 明细表、透视表与透视图、交互和问题诊断 | [VisActor/VTable](https://github.com/VisActor/VTable) |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT | 本仓库 |
-| [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG | 本仓库 |
-| [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 | 本仓库 |
 
 每个 Skill 都包含完整指令、本地参考资料、模板和脚本。无需额外安装 VisActor CLI、MCP 服务，也无需为 Skill 单独配置模型 Key 或访问 VisActor 托管 API。模型能力由宿主 Agent 提供。
 
@@ -23,39 +32,67 @@
 在你准备使用 Skills 的项目目录中执行：
 
 ```bash
-npx skills add VisActor/VChart --skill vchart-development-assistant
-npx skills add VisActor/VTable --skill vtable-development-assistant
 npx skills add VisActor/skills --skill data-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
+```
+
+如需图表和表格能力，从对应仓库安装：
+
+```bash
+npx skills add VisActor/VChart --skill vchart-development-assistant
+npx skills add VisActor/VTable --skill vtable-development-assistant
 ```
 
 按照安装器提示选择 Codex 或 Claude Code。每个 Skill 都可以按需单独安装。更多安装选项见 [Skills CLI 说明](https://github.com/vercel-labs/skills#usage)。
 
 运行要求：
 
-- Node.js 和 npm，用于执行上述安装命令。
-- 具备文件系统和 Shell 工具的 Agent，以及该 Agent 自身的模型访问权限。
-- data-storytelling 需要 Python 3.10+ 和 Node.js（校验 JavaScript），Python 脚本使用标准库。VChart/VTable Skill 的运行要求见各自仓库。
-- 浏览器和网络连接，用于打开生成的 HTML。data-storytelling 通过公开的 unpkg CDN 加载固定版本的 VSeed、VChart、VTable 和 GSAP。
+- Node.js 和 npm，用于安装；具备文件读写、命令执行及自身模型访问权限的宿主 Agent。
+- 浏览器和网络连接，用于预览生成的 HTML 并加载外部资源。
 
-杂志图文与人物志另需 Python 3.10+、Pillow、Playwright 及 Chromium/Chrome；按所选 Skill 的 `requirements.txt` 安装依赖。字体默认从飞书镜像 CDN 加载，失败时使用系统字体；人物志另加载固定版本 VInfo SDK，详见其[环境说明](skills/life-chronicle/references/environment.md)。图片检索、生图与抠图依赖宿主能力；杂志模板只附占位素材，制作时需要替换。
+| Skill | 运行依赖 |
+| --- | --- |
+| data-storytelling | Python 3.10+（标准库）和 Node.js（校验 JavaScript）；从 unpkg 加载固定版本的 VSeed、VChart、VTable 与 GSAP |
+| editorial-magazine | Python 3.10+、其 [requirements.txt](skills/editorial-magazine/requirements.txt) 中的依赖，以及用于导出 PNG 的 Chromium/Chrome；字体从 CDN 加载，支持系统回退 |
+| life-chronicle | Python 3.10+、其 [requirements.txt](skills/life-chronicle/requirements.txt) 中的依赖，以及用于导出 PNG 的 Chromium/Chrome；固定版本的 VInfo 与字体 CDN，详见[环境说明](skills/life-chronicle/references/environment.md) |
+
+图片检索、生图与抠图使用宿主能力，素材要求以所选 Skill 为准。杂志模板中的占位素材需要在交付前替换。VChart/VTable Skill 的运行要求见各自仓库。
 
 ## 使用
 
 安装后，在 Agent 中指定所需 Skill，并提供你的数据。例如：
 
-- “用 VChart 对比这个 CSV 中各地区、各季度的销售额，给我可编辑的源码和 HTML。”
-- “使用这个文件中的全部数据，用 VTable 创建一个支持排序的明细表。”
 - “使用 data-storytelling，向增长负责人解释这个 CSV 的留存变化，生成可分享的 HTML 故事。”
+- “使用 editorial-magazine，把这篇文章及其来源整理成可编辑 HTML 和 PNG 杂志组图。”
+- “使用 life-chronicle，根据这些有来源的事件和照片制作人物志海报，时间线文字需要可编辑。”
 
 data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装；不依赖托管图表生成服务。图片生成使用宿主能力，没有生图工具时采用计划声明的 fallback。Web-PPT 是浏览器演示稿，不是 `.pptx`。
 
 生成的 JavaScript/HTML 是可执行代码。请在本地预览自己生成或已审查的产物；评测浏览器并不是用于执行任意不可信提交的安全沙箱。
 
+## 案例展示
+
+[案例目录](examples/README.md) 已收录 CO₂ 滚动故事和 Las Vegas Web-PPT，包含任务提示词、可获取的输入、最终产物与预览。
+
 ## 开发与维护
 
 本节面向需要修改 Skills 或运行本地测试的贡献者。默认分支和主维护分支均为 `develop`，请先阅读 [贡献指南](CONTRIBUTING.md)。
+
+### 仓库结构
+
+| 路径 | 内容 |
+| --- | --- |
+| `skills/<skill-name>/` | 可独立安装的运行内容：`SKILL.md`、参考资料、模板／资源与脚本 |
+| `tests/<skill_name>/` | 按 Skill 组织的确定性 Python 回归测试；为兼容 Python 导入，连字符改为下划线 |
+| `tests/test_*` | 共用工具与安装检查，以及 Node.js 浏览器／Story 集成测试 |
+| `examples/<skill-name>/<case-name>/` | 面向用户的精选案例：提示词、输入、结果与预览 |
+| `evals/cases/<skill-name>/` | 模型任务的提示词、输入与验收标准 |
+| `evals/smoke/<skill-name>/<case-id>/` | 固定浏览器用例的配置、输入与验收标准 |
+| `evals/scripts/` | 共用任务执行器与浏览器检查 |
+| `docs/` | 贡献者参考文档；`docs/migration/` 为历史迁移记录 |
+
+每个运行时 Skill 都需要自包含，不依赖 `tests/`、`evals/` 或另一个 Skill 的本地目录。新增 Skill 与选择验证范围的约定见[贡献指南](CONTRIBUTING.md#adding-or-updating-a-skill)。
 
 ### 从本地仓库安装
 
@@ -83,13 +120,15 @@ uv run ruff check skills tests evals/scripts
 
 ### 通过模型 API 调试任务
 
-轻量 harness 可通过 OpenAI 兼容的 Chat Completions 接口加载本仓库 Skill，执行固定用例或自定义任务，并保存请求、工具调用、用量和产物日志。它适合有限步骤的脚本与任务调试，不推荐用于数据叙事端到端评测；完整任务请使用 Codex 或 Claude Code。
+轻量 harness 可通过 OpenAI 兼容的 Chat Completions 接口加载本仓库 Skill，执行固定用例或自定义任务，并保存请求、工具调用、用量和产物日志。它提供文件与图片工具，以及 data-storytelling 脚本白名单。目前没有 editorial-magazine 或 life-chronicle 的脚本适配；这两者的完整流程与数据叙事端到端任务，请使用 Codex 或 Claude Code。
 
-配置和运行方式见 [评测说明](evals/README.zh-CN.md)。[用例目录](evals/cases/README.zh-CN.md) 包含 5 个数据叙事任务，浏览器 smoke 包含 HTML 故事和 Web-PPT 两条链路。模型任务不在 CI 中运行，调用模型可能产生费用。
+配置和运行方式见 [评测说明](evals/README.zh-CN.md)。[用例目录](evals/cases/README.zh-CN.md) 目前覆盖 data-storytelling，浏览器 smoke 覆盖其 HTML 故事和 Web-PPT。其他 Skills 已有脚本回归测试，尚无固定模型任务或浏览器 smoke。模型任务不在 CI 中运行，调用模型可能产生费用。
 
 ## 版本管理
 
 本仓库维护的 Skills 按整个仓库统一管理版本，每次正式发布使用 Git tag 标识包含 Skill 指令、参考资料、模板和脚本的版本快照。VChart 和 VTable Skill 的版本由各自仓库管理。
+
+日常修改通过 Git commit 标识，不需要每次调整 Skill 都创建发布 tag。
 
 反馈问题或复现结果时，请记录发布 tag 或 commit SHA；分支内容会随开发变化。VTable `1.26.8` 等依赖版本表示底层库的版本，不是 Skill 的发布版本。历史 VMind SDK 的 tag 保持不变，仍归属于原 SDK。
 
