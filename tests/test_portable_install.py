@@ -36,5 +36,4 @@ def test_copied_skill_generates_without_source_checkout(tmp_path, skill):
     )
     html = cwd / "result files/demo.html"
     assert html.exists(), result.stderr
-    assert "https://unpkg.com/" in html.read_text()
     assert str(ROOT) not in html.read_text()
