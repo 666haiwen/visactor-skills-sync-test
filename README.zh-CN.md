@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-面向具备文件读写和命令执行能力的 Agent，提供 VChart、VTable 和数据叙事 Skills。用于生成图表、表格、HTML 数据故事与 Web-PPT，并诊断图表配置问题。
+面向具备文件读写和命令执行能力的 Agent，提供图表、表格、数据叙事、杂志图文与人物志 Skills。用于生成图表、表格、HTML 数据故事、Web-PPT、杂志组图与人物时间线海报，并诊断图表配置问题。
 
 ## Skills
 
@@ -11,6 +11,8 @@
 | [vchart-skill](skills/vchart-skill/SKILL.md) | 图表生成、问题诊断、图片还原和 React 集成 |
 | [vtable-skill](skills/vtable-skill/SKILL.md) | 明细表、透视表与透视图、交互和问题诊断 |
 | [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT |
+| [editorial-magazine-html](skills/editorial-magazine-html/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 |
 
 每个 Skill 都包含完整指令、本地参考资料、模板和脚本。无需额外安装 VisActor CLI、MCP 服务，也无需为 Skill 单独配置模型 Key 或访问 VisActor 托管 API。模型能力由宿主 Agent 提供。
 
@@ -24,6 +26,8 @@
 npx skills add VisActor/skills --skill vchart-skill
 npx skills add VisActor/skills --skill vtable-skill
 npx skills add VisActor/skills --skill data-storytelling
+npx skills add VisActor/skills --skill editorial-magazine-html
+npx skills add VisActor/skills --skill life-chronicle
 ```
 
 按照安装器提示选择 Codex 或 Claude Code。每个 Skill 都可以按需单独安装。更多安装选项见 [Skills CLI 说明](https://github.com/vercel-labs/skills#usage)。
@@ -34,6 +38,8 @@ npx skills add VisActor/skills --skill data-storytelling
 - 具备文件系统和 Shell 工具的 Agent，以及该 Agent 自身的模型访问权限。
 - VChart/VTable 脚本需要 Python 3.9+；data-storytelling 需要 Python 3.10+ 和 Node.js（校验 JavaScript）。脚本使用 Python 标准库。
 - 浏览器和网络连接，用于打开生成的 HTML。模板通过公开的 unpkg CDN 加载固定版本的 VChart/VTable、React（需要时）和 Monaco，因此并非完全离线运行。data-storytelling 另加载固定版本的 VSeed 与 GSAP。
+
+杂志图文与人物志另需 Python 3.10+、Pillow、Playwright 及 Chromium/Chrome；按所选 Skill 的 `requirements.txt` 安装依赖。字体默认从飞书镜像 CDN 加载，失败时使用系统字体；人物志另加载固定版本 VInfo SDK，详见其[环境说明](skills/life-chronicle/references/environment.md)。图片检索、生图与抠图依赖宿主能力；杂志模板只附占位素材，制作时需要替换。
 
 VChart 知识检索在本地读取随 Skill 附带的示例和 SOP，采用关键词匹配，无需托管的语义检索服务。未匹配的问题可继续查阅内置类型定义与 API 参考资料。
 
@@ -61,6 +67,8 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 npx skills add ./skills/vchart-skill
 npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
+npx skills add ./skills/editorial-magazine-html
+npx skills add ./skills/life-chronicle
 ```
 
 也可以将 Skill 的完整目录复制到 Agent 的技能目录中，包括参考资料、模板和脚本，不要只复制 `SKILL.md`。Codex 和 Claude Code 的调试工作区准备方式见 [本地调试指南](docs/debugging.md)。修改 Skill 后，请先更新安装副本，再重新测试。

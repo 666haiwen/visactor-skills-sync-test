@@ -1,0 +1,4 @@
+interface:
+  display_name: "人物志"
+  short_description: "整理人物生平与关键转折，结合真实照片生成可编辑的人物时间线海报。"
+  default_prompt: "使用 $life-chronicle 梳理指定人物的生平，未指定构图时随机抽选照片墙时间线、中心网格或环形叙事，制作带人物剪贴画的横版或竖版人物志。"

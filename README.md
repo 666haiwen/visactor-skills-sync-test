@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-VChart, VTable and data storytelling skills for agents that can read files and run commands. Generate charts, tables, HTML data stories and Web-PPT presentations, and diagnose chart configuration problems.
+Chart, table, data storytelling, editorial magazine and biography poster skills for agents that can read files and run commands. Generate charts, tables, HTML data stories, Web-PPT presentations, editorial image series and biography posters, and diagnose chart configuration problems.
 
 ## Skills
 
@@ -11,6 +11,8 @@ VChart, VTable and data storytelling skills for agents that can read files and r
 | [vchart-skill](skills/vchart-skill/SKILL.md) | Chart generation, diagnosis, image replication and React integration |
 | [vtable-skill](skills/vtable-skill/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis |
 | [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT |
+| [editorial-magazine-html](skills/editorial-magazine-html/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
 
 Each skill includes its instructions, local references, templates and scripts. No separate VisActor CLI, MCP server, model key or hosted VisActor API is required. The host agent supplies the model.
 
@@ -24,6 +26,8 @@ Run these commands in the project where you want to use the Skills:
 npx skills add VisActor/skills --skill vchart-skill
 npx skills add VisActor/skills --skill vtable-skill
 npx skills add VisActor/skills --skill data-storytelling
+npx skills add VisActor/skills --skill editorial-magazine-html
+npx skills add VisActor/skills --skill life-chronicle
 ```
 
 Follow the installer's prompts to select Codex or Claude Code. You can install each Skill independently. More installation options are documented in the [Skills CLI reference](https://github.com/vercel-labs/skills#usage).
@@ -34,6 +38,8 @@ Requirements:
 - An agent with filesystem and shell tools, plus its own model access.
 - Python 3.9+ for VChart/VTable; Python 3.10+ and Node.js (JavaScript validation) for data-storytelling. Python scripts use the standard library.
 - A browser and internet access for generated HTML. Templates fetch pinned VChart/VTable, React (when needed), and Monaco packages from the public unpkg CDN. Data-storytelling also loads pinned VSeed and GSAP. This is not a fully offline bundle.
+
+Editorial magazines and biography posters additionally require Python 3.10+, Pillow, Playwright and Chromium/Chrome; install the selected Skill's `requirements.txt`. Fonts load from a Feishu CDN mirror with system fallbacks. Life Chronicle also loads a pinned VInfo SDK; see its [environment guide](skills/life-chronicle/references/environment.md). Image search, generation and cutout tools come from the host. Magazine templates contain placeholders that must be replaced for delivery.
 
 VChart knowledge search reads bundled example/SOP files locally. It uses keyword matching, not a hosted semantic search service; unmatched questions fall back to the included type and API references.
 
@@ -61,6 +67,8 @@ From the root of your local repository, install the working copy of a Skill:
 npx skills add ./skills/vchart-skill
 npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
+npx skills add ./skills/editorial-magazine-html
+npx skills add ./skills/life-chronicle
 ```
 
 Alternatively, copy the complete Skill directory into your agent's skill directory, including its references, templates and scripts. Do not copy only `SKILL.md`. See the [local debugging guide](docs/debugging.md) for Codex and Claude Code workspace setup. Refresh the installed copy after changing a Skill before retesting.
