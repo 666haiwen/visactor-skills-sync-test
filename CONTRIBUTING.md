@@ -6,11 +6,13 @@ Changes to Skills should protect a concrete user task or failure mode. Keep runt
 
 Use `develop` as the default and primary maintenance branch. Create contribution branches from the latest `origin/develop` and target pull requests to `develop`.
 
+VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/VisActor/VChart/tree/develop/skills/vchart-development-assistant) and [VisActor/VTable](https://github.com/VisActor/VTable/tree/develop/skills/vtable-development-assistant). Make changes to those Skills in their owning repositories.
+
 The recommended development loop is [direct Skill debugging in Codex or Claude Code](docs/debugging.md). Use their existing harness for exploration and iterative fixes. The API harness is a lightweight alternative for fixed cases or a custom prompt with input files; it supports only OpenAI-compatible Chat Completions.
 
 1. Follow the [contributor quickstart](evals/README.md#contributor-quickstart) for prerequisites, API endpoint/model/key-environment configuration, commands and report interpretation.
 2. Run `uv sync --locked`, then `uv run pytest tests -q`. These tests need no model account.
-3. For a Skill change, choose relevant cases from the [coverage table](evals/cases/README.md). Run one with `uv run python evals/scripts/run.py --case vchart-grouped --browser` (substitute the relevant case id). Model API runs use your own credentials and billing. Start with one case and inspect usage.json.
+3. For a Skill change, choose relevant cases from the [coverage table](evals/cases/README.md). Run one with `uv run python evals/scripts/run.py --case story-retention-html --browser` (substitute the relevant case id). Model API runs use your own credentials and billing. Start with one case and inspect usage.json.
 4. Inspect the generated source, screenshot and required interactions. Automated success does not replace semantic or visual review.
 5. Run `uv run ruff check skills tests evals/scripts` for Python changes. Keep the smallest meaningful verification scope.
 
@@ -21,7 +23,7 @@ The runner installs the selected Skill from the current checkout into each case 
 `Skills CI` runs on pull requests and pushes to `main`/`develop`, with two jobs:
 
 - **Lint and regressions**: install locked Python dependencies, run Ruff and the deterministic test suite, including per-Skill case/input contracts and a simulated model API.
-- **Browser smoke (no model)**: use copied Skills to generate a fixed VChart chart, VTable table, HTML data story and Web-PPT deck, then check rendering, runtime records and browser errors. Pinned npm packages serve CDN requests locally; unexpected external requests fail. Save JSON reports, logs, generated HTML and screenshots for seven days.
+- **Browser smoke (no model)**: use copied Skills to generate a fixed HTML data story and Web-PPT deck, then check chart rendering, slide navigation and browser errors. Pinned npm packages serve CDN requests locally; unexpected external requests fail. Save JSON reports, logs, generated HTML and screenshots for seven days.
 
 Maintain browser smoke configurations, inputs and acceptance criteria together under `evals/smoke/<skill-name>/<case-id>/`. The runner discovers them automatically; see the [smoke case guide](evals/smoke/README.md) for the catalog, file contract and adding cases.
 

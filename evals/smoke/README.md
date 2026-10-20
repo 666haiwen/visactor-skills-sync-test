@@ -8,12 +8,10 @@ Use fixed inputs to check Skill scripts, templates and generated pages. These te
 
 | Skill | Case | Checks |
 | --- | --- | --- |
-| vchart-skill | [vchart-grouped](vchart-skill/vchart-grouped) | Generate and render a grouped chart; verify complete input records |
-| vtable-skill | [vtable-list](vtable-skill/vtable-list) | Generate and render a list table; verify complete input records |
 | data-storytelling | [story-html](data-storytelling/story-html) | Assemble an HTML story and render its chart |
 | data-storytelling | [story-ppt](data-storytelling/story-ppt) | Assemble a Web-PPT, render its chart and navigate forward and back |
 
-All cases check for a nonblank chart/table canvas, page/resource errors and successful local asset loading. PPT navigation checks the target slide's position and visibility. Smoke uses reduced motion and does not assess animation or narrative quality. Screenshots are diagnostic evidence, not pixel-comparison targets.
+Both cases check for a nonblank chart canvas, page/resource errors and successful local asset loading. PPT navigation checks the target slide's position and visibility. Smoke uses reduced motion and does not assess animation or narrative quality. Screenshots are diagnostic evidence, not pixel-comparison targets.
 
 ## Run
 
@@ -35,4 +33,4 @@ Reports, logs, inputs, generated files and screenshots are saved under `.cache/`
 
 ## Case files
 
-Each `<skill>/<case>/` directory contains `config.json` (build settings), `inputs/` (fixed inputs) and `expectations.json` (required checks). Chart/table cases also contain `spec.js`. Add cases under the corresponding Skill directory; the runner discovers them automatically.
+Each `<skill>/<case>/` directory contains `config.json` (build settings), `inputs/` (fixed inputs) and `expectations.json` (required checks). Add cases under the corresponding Skill directory; the runner discovers them automatically.

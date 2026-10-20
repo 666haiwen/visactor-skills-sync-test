@@ -8,12 +8,10 @@
 
 | Skill | 用例 | 检查内容 |
 | --- | --- | --- |
-| vchart-skill | [vchart-grouped](vchart-skill/vchart-grouped) | 生成并渲染分组图表，核对输入记录完整性 |
-| vtable-skill | [vtable-list](vtable-skill/vtable-list) | 生成并渲染明细表，核对输入记录完整性 |
 | data-storytelling | [story-html](data-storytelling/story-html) | 组装 HTML 故事并渲染图表 |
 | data-storytelling | [story-ppt](data-storytelling/story-ppt) | 组装 Web-PPT、渲染图表、前进及返回翻页 |
 
-所有用例检查图表或表格画布非空、页面及资源错误、本地资源加载。PPT 翻页检查目标页面的位置和可见性。冒烟测试使用减少动态效果设置，不验收动画或叙事质量；截图用于排查问题，不做像素对比。
+两个用例均检查图表画布非空、页面及资源错误、本地资源加载。PPT 翻页检查目标页面的位置和可见性。冒烟测试使用减少动态效果设置，不验收动画或叙事质量；截图用于排查问题，不做像素对比。
 
 ## 运行方式
 
@@ -35,4 +33,4 @@ Linux 缺少浏览器系统依赖时，使用 `install --with-deps chromium`。
 
 ## 用例文件
 
-每个 `<skill>/<case>/` 目录包含 `config.json`（构建配置）、`inputs/`（固定输入）和 `expectations.json`（必须执行的检查）。图表、表格用例还包含 `spec.js`。新增用例放在对应 Skill 目录下，runner 自动发现。
+每个 `<skill>/<case>/` 目录包含 `config.json`（构建配置）、`inputs/`（固定输入）和 `expectations.json`（必须执行的检查）。新增用例放在对应 Skill 目录下，runner 自动发现。

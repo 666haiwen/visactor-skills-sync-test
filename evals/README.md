@@ -4,7 +4,7 @@
 
 Run the selected Skill against a fixed prompt and input files through a configurable model API. No Codex/Claude Code installation or account is required for the default runner. This is a small evaluation tool loop, not a hosted service or a general agent framework.
 
-For everyday Skill development, **start with Codex or Claude Code** using the [direct debugging guide](../docs/debugging.md). The API harness below is an experimental route for bounded VChart/VTable tasks with clear inputs and outputs. It can test actual model-generated artifacts against fixed checks, not just Skill loading or tool availability, but its results depend on its limited tools and context budget. It is not recommended for end-to-end data-storytelling evaluation. Its CLI default is API; that does not make it the recommended overall user experience.
+For everyday Skill development, **start with Codex or Claude Code**; see the [direct debugging guide](../docs/debugging.md). The API harness is an experimental route for bounded tasks and bundled script debugging. It is not recommended for end-to-end data-storytelling evaluation.
 
 GitHub CI runs deterministic regressions and fixed browser smoke tests only. It does not run the model tasks below. Browser cases keep their configuration, inputs and acceptance criteria together by Skill in [smoke/](smoke/README.md); that guide covers commands and adding cases. See also [Continuous integration](../CONTRIBUTING.md#continuous-integration).
 
@@ -52,7 +52,7 @@ Edit `evals/model.local.json` (gitignored):
 }
 ```
 
-Replace `MODEL_ID` and `base_url` with your provider's actual model and API base URL. The runner appends `/chat/completions`. It supports **OpenAI-compatible Chat Completions with function calling and token usage**; this is a protocol choice, not a restriction to OpenAI-hosted models. Native Anthropic Messages and OpenAI Responses are not implemented. A provider describing itself as compatible still needs to support this tool loop and usage format. Image-replication cases additionally require image input support.
+Replace `MODEL_ID` and `base_url` with your provider's actual model and API base URL. The runner appends `/chat/completions`. It supports **OpenAI-compatible Chat Completions with function calling and token usage**; this is a protocol choice, not a restriction to OpenAI-hosted models. Native Anthropic Messages and OpenAI Responses are not implemented. A provider describing itself as compatible still needs to support this tool loop and usage format.
 
 Set the key in the named environment variable using your secret manager or shell. For an interactive Bash/Zsh terminal, this avoids entering it in command history:
 
@@ -74,7 +74,7 @@ Some compatible providers require `max_tokens`; change `output_token_parameter` 
 ```bash
 cp evals/model.compatible.example.json evals/another-model.local.json
 # Edit the base URL/model and export the named key variable before running.
-uv run python evals/scripts/run.py --config evals/another-model.local.json --case vchart-grouped
+uv run python evals/scripts/run.py --config evals/another-model.local.json --case story-retention-html
 ```
 
 All `evals/*.local.json` files are gitignored. API keys may be stored in the ignored local JSON `api_key` field or supplied through an environment variable. Models using the same endpoint can also be selected with `--model`.
@@ -105,28 +105,25 @@ uv run python evals/scripts/run.py --group all --list
 Start with one task. The default runner is `api`:
 
 ```bash
-uv run python evals/scripts/run.py --case vchart-grouped --browser
+uv run python evals/scripts/run.py --case story-retention-html --browser
 
 # Explicit model override
-uv run python evals/scripts/run.py --case vchart-grouped --model MODEL_ID --browser
+uv run python evals/scripts/run.py --case story-retention-html --model MODEL_ID --browser
 ```
 
 Then run the relevant group:
 
 ```bash
-# 8 VChart core tasks, 10 independent model conversations including three edit turns
-uv run python evals/scripts/run.py --skill vchart-skill --group core --browser
+# Three core Story tasks
+uv run python evals/scripts/run.py --skill data-storytelling --group core --browser
 
-# 4 VTable tasks
-uv run python evals/scripts/run.py --skill vtable-skill --group core --browser
-
-# 24 additional VChart tasks
-uv run python evals/scripts/run.py --skill vchart-skill --group extended --browser
+# Two extended Story tasks
+uv run python evals/scripts/run.py --skill data-storytelling --group extended --browser
 ```
 
-Use `--group all` for all 41 tasks, or repeat `--case` to select several. Explicit cases override groups. `--skill` selects a Skill and groups apply within it. The default is VChart core. With a Skill selected, `--group all` selects only its cases. `--timeout 600` sets the per-turn execution deadline. Start small and inspect `usage.json` before expanding the run.
+Use `--group all` for all five tasks, or repeat `--case` to select several. Explicit cases override groups. `--skill` selects a Skill and groups apply within it. The default is data-storytelling core. With a Skill selected, `--group all` selects only its cases. `--timeout 600` sets the per-turn execution deadline. Start small and inspect `usage.json` before expanding the run.
 
-The API runner includes the selected `SKILL.md` in its initial instructions. It offers four tools: `read_file`, `list_files`, `write_file` and `run_skill_script`. Reads are confined to that installed Skill, task inputs and outputs; writes go to outputs. Only the bundled HTML generators and knowledge-search script can execute; they receive no model credentials. References are read on demand. Checker expectations remain outside the workspace and are inaccessible through these tools. This is a restricted tool interface, not an OS sandbox: only run reviewed Skill scripts and review generated HTML before browser execution.
+The API runner includes the selected `SKILL.md` in its initial instructions. It offers four tools: `read_file`, `list_files`, `write_file` and `run_skill_script`. Reads are confined to that installed Skill, task inputs and outputs; writes go to outputs. Only the allowed bundled Story plan, assembly, asset and validation scripts can execute; they receive no model credentials. References are read on demand. Checker expectations remain outside the workspace and are inaccessible through these tools. This is a restricted tool interface, not an OS sandbox: only run reviewed Skill scripts and review generated HTML before browser execution.
 
 ### 5. Read the report
 
@@ -144,7 +141,7 @@ The last console line prints `Report: .../evals/runs/<run-id>/README.md`. Open i
 Use this only when testing that host's behavior. It uses your local Codex authentication/configuration and quota; API-runner limits do not apply to it.
 
 ```bash
-uv run python evals/scripts/run.py --runner codex --case vchart-grouped --browser
+uv run python evals/scripts/run.py --runner codex --case story-retention-html --browser
 ```
 
 `--agent /absolute/path/to/codex` selects the executable; `--model` overrides its model. Codex must support `exec --json --ephemeral --sandbox workspace-write --skip-git-repo-check`. The initial historical runs used `0.155.0-alpha.9`. See the [official CLI](https://learn.chatgpt.com/docs/codex/cli), [authentication](https://learn.chatgpt.com/docs/auth) and [configuration](https://learn.chatgpt.com/docs/config-file/config-basic) instructions. This mode sets workspace-write sandboxing, disables interactive approval/project-document injection and retains the host's other configuration. API and Codex runs have different tool capabilities; compare them only with that distinction recorded.
@@ -167,11 +164,9 @@ uv run python evals/scripts/run.py --runner codex --case vchart-grouped --browse
 
 `cases/<skill-name>/tasks.json` contains prompts and input filenames. `cases/<skill-name>/expectations.json` is read by the checker, not copied into the agent's task workspace. Inputs are synthetic, publicly shareable fixtures.
 
-Coverage: 32 VChart tasks, 4 VTable tasks and 5 data storytelling tasks. See [the case guide](cases/README.md) for per-Skill catalogs, groups and acceptance criteria. Curated tasks and executed tasks are separate counts. Core VChart covers grouping, diagnosis, stacking, normalization, nulls, explanation, clarification and file-based continuation. Extended tasks include React, image replication, axes, interactions and additional chart families.
+Coverage: five data-storytelling tasks, grouped into three core and two extended cases. See [the case guide](cases/README.md) for inputs and acceptance criteria. Catalog size does not imply executed or passing coverage.
 
-The three-turn continuation case creates a new Agent invocation for each turn, copying the preceding filesystem state into a new workspace. It tests editing existing artifacts, not conversation memory. Each turn retains separate logs and outputs, and a failed turn blocks subsequent turns. Text-only tasks do not require HTML and fail if they generate unrequested output files.
-
-`--browser` opens generated HTML on a loopback server and records JS/console/network errors, nonblank canvas pixels, screenshots and, for data cases, runtime records. The quarter-filter case actually selects Q1, Q2 and all, then compares displayed records. A rendered canvas alone is not proof of correct visual encoding or good design.
+`--browser` opens generated HTML on a loopback server and records page/network errors, nonblank chart pixels and screenshots. Story checks retain compiled VSeed chart specifications; Web-PPT checks forward and return navigation. Rendering alone does not establish correct visual encoding or narrative quality.
 
 ## Logs
 
@@ -189,7 +184,7 @@ Each run writes an immutable new directory under ignored `evals/runs/`:
 - `final-response.md`: completed assistant messages extracted from the event stream.
 - `workspace/`: installed skill snapshot, inputs and produced output files.
 - `browser.json`, `browser-command.log`, `screenshot.png`: browser evidence when enabled.
-- `runtime-spec.json`: VChart spec observed in the browser when the template exposes its instance; null if unavailable, function bodies represented as `[function]` (inspect source for callback behavior).
+- `runtime-spec.json`: compiled VSeed chart payloads observed in the browser, function bodies represented as `[function]` (inspect source for callback behavior).
 - `result.json`: artifact inventory/hashes, automated results and a separate visual-review checklist.
 
 Missing host data is not invented; this tool cannot promise private model reasoning or events the host does not expose. It does not dump the environment or auth files. Known credential forms and secret-valued environment variables are redacted in process logs. Inputs and artifacts may still contain user data: inspect before sharing any run directory.
@@ -205,12 +200,6 @@ node evals/scripts/check-browser.mjs evals/runs/RUN/CASE
 ```
 
 This replaces only browser evidence; the original result.json remains a record of the original evaluation. Use a new run for a changed skill or input.
-
-## Live API evidence for basic chart and table tasks (2026-10-09)
-
-With the locally configured `gpt-5.4-2026-03-05` endpoint and a 40,000-token cumulative threshold, neither representative run completed. `vchart-grouped` made 3 requests, reported 56,700 total tokens and wrote `spec.js`, but stopped before producing HTML. `vtable-list` made 5 requests, reported 49,748 total tokens and wrote `spec.js` and `demo.html`, but stopped before a final response; its browser checks did not pass. The threshold is checked between requests, so a final request can exceed it. Both runs reported zero cached prompt tokens. Their detailed logs are in the local, Git-ignored `evals/runs/` directory.
-
-These two failures do not establish that VChart/VTable tasks cannot succeed through a model API. They do mean this harness has not yet demonstrated reliable end-to-end completion for even these basic cases with this model and budget. Evaluate a proposed Skill change with the generated artifact, usage and independent review, not just the runner exit code.
 
 ## Data storytelling debugging
 

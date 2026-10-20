@@ -1,18 +1,18 @@
-# VisActor Agent Skills
+# VisActor Skills
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-面向具备文件读写和命令执行能力的 Agent，提供图表、表格、数据叙事、杂志图文与人物志 Skills。用于生成图表、表格、HTML 数据故事、Web-PPT、杂志组图与人物时间线海报，并诊断图表配置问题。
+面向 VisActor 可视化生态的 Agent Skills。通过可独立安装的 Skills 制作数据故事、杂志图文和人物志海报。VChart 和 VTable Skill 在各自的库仓库中维护。
 
 ## Skills
 
-| Skill | 能力 |
-| --- | --- |
-| [vchart-skill](skills/vchart-skill/SKILL.md) | 图表生成、问题诊断、图片还原和 React 集成 |
-| [vtable-skill](skills/vtable-skill/SKILL.md) | 明细表、透视表与透视图、交互和问题诊断 |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT |
-| [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
-| [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 |
+| Skill | 能力 | 维护位置 |
+| --- | --- | --- |
+| [VChart Skill](https://github.com/VisActor/VChart/blob/develop/skills/vchart-development-assistant/SKILL.md) | 图表生成、问题诊断、图片还原和 React 集成 | [VisActor/VChart](https://github.com/VisActor/VChart) |
+| [VTable Skill](https://github.com/VisActor/VTable/blob/develop/skills/vtable-development-assistant/SKILL.md) | 明细表、透视表与透视图、交互和问题诊断 | [VisActor/VTable](https://github.com/VisActor/VTable) |
+| [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT | 本仓库 |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG | 本仓库 |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 | 本仓库 |
 
 每个 Skill 都包含完整指令、本地参考资料、模板和脚本。无需额外安装 VisActor CLI、MCP 服务，也无需为 Skill 单独配置模型 Key 或访问 VisActor 托管 API。模型能力由宿主 Agent 提供。
 
@@ -23,8 +23,8 @@
 在你准备使用 Skills 的项目目录中执行：
 
 ```bash
-npx skills add VisActor/skills --skill vchart-skill
-npx skills add VisActor/skills --skill vtable-skill
+npx skills add VisActor/VChart --skill vchart-development-assistant
+npx skills add VisActor/VTable --skill vtable-development-assistant
 npx skills add VisActor/skills --skill data-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
@@ -36,12 +36,10 @@ npx skills add VisActor/skills --skill life-chronicle
 
 - Node.js 和 npm，用于执行上述安装命令。
 - 具备文件系统和 Shell 工具的 Agent，以及该 Agent 自身的模型访问权限。
-- VChart/VTable 脚本需要 Python 3.9+；data-storytelling 需要 Python 3.10+ 和 Node.js（校验 JavaScript）。脚本使用 Python 标准库。
-- 浏览器和网络连接，用于打开生成的 HTML。模板通过公开的 unpkg CDN 加载固定版本的 VChart/VTable、React（需要时）和 Monaco，因此并非完全离线运行。data-storytelling 另加载固定版本的 VSeed 与 GSAP。
+- data-storytelling 需要 Python 3.10+ 和 Node.js（校验 JavaScript），Python 脚本使用标准库。VChart/VTable Skill 的运行要求见各自仓库。
+- 浏览器和网络连接，用于打开生成的 HTML。data-storytelling 通过公开的 unpkg CDN 加载固定版本的 VSeed、VChart、VTable 和 GSAP。
 
 杂志图文与人物志另需 Python 3.10+、Pillow、Playwright 及 Chromium/Chrome；按所选 Skill 的 `requirements.txt` 安装依赖。字体默认从飞书镜像 CDN 加载，失败时使用系统字体；人物志另加载固定版本 VInfo SDK，详见其[环境说明](skills/life-chronicle/references/environment.md)。图片检索、生图与抠图依赖宿主能力；杂志模板只附占位素材，制作时需要替换。
-
-VChart 知识检索在本地读取随 Skill 附带的示例和 SOP，采用关键词匹配，无需托管的语义检索服务。未匹配的问题可继续查阅内置类型定义与 API 参考资料。
 
 ## 使用
 
@@ -64,8 +62,6 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 在本地仓库根目录执行，安装当前工作副本中的 Skill：
 
 ```bash
-npx skills add ./skills/vchart-skill
-npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
 npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
@@ -87,15 +83,13 @@ uv run ruff check skills tests evals/scripts
 
 ### 通过模型 API 调试任务
 
-对于持有模型 API 的用户，轻量 harness 可以加载指定 Skill，执行固定 case 或自定义 prompt 与输入文件，支持 OpenAI 兼容的 Chat Completions 接口。目前应将它视为输入、产物边界清晰的 VChart/VTable 任务的实验性调试入口，而不是已验证可替代通用 Agent 的方案。数据叙事端到端任务及日常交互式调试推荐使用 Codex 或 Claude Code。
+轻量 harness 可通过 OpenAI 兼容的 Chat Completions 接口加载本仓库 Skill，执行固定用例或自定义任务，并保存请求、工具调用、用量和产物日志。它适合有限步骤的脚本与任务调试，不推荐用于数据叙事端到端评测；完整任务请使用 Codex 或 Claude Code。
 
-固定 prompt/数据任务、可观察的执行日志、浏览器检查与截图，详见 [评测说明](evals/README.zh-CN.md)。这些是维护工具，不属于用户安装的 Skill。默认 runner 使用用户自行配置的模型 API 和 Key，无需安装 Codex 或 Claude Code；模型调用可能产生费用。将 `evals/model.example.json` 复制为被 Git 忽略的 `evals/model.local.json`，配置 endpoint、model 和 Key 环境变量后，运行 `uv run python evals/scripts/run.py --case vchart-grouped --browser`。环境准备和用量限制详见快速上手。
-
-[用例目录](evals/cases/README.zh-CN.md) 收录 32 个 VChart 任务、4 个 VTable 任务和 5 个数据叙事任务，按 Skill 分目录维护，并提供明确的验收条件。runner 默认执行包含 8 个任务的 VChart 核心组；收录用例并不代表所有任务均已执行。
+配置和运行方式见 [评测说明](evals/README.zh-CN.md)。[用例目录](evals/cases/README.zh-CN.md) 包含 5 个数据叙事任务，浏览器 smoke 包含 HTML 故事和 Web-PPT 两条链路。模型任务不在 CI 中运行，调用模型可能产生费用。
 
 ## 版本管理
 
-Skills 按整个仓库统一管理版本。每次正式发布使用 Git tag 标识一个包含 Skill 指令、参考资料、模板和脚本的版本快照，各 Skill 不单独维护版本号。
+本仓库维护的 Skills 按整个仓库统一管理版本，每次正式发布使用 Git tag 标识包含 Skill 指令、参考资料、模板和脚本的版本快照。VChart 和 VTable Skill 的版本由各自仓库管理。
 
 反馈问题或复现结果时，请记录发布 tag 或 commit SHA；分支内容会随开发变化。VTable `1.26.8` 等依赖版本表示底层库的版本，不是 Skill 的发布版本。历史 VMind SDK 的 tag 保持不变，仍归属于原 SDK。
 

@@ -95,18 +95,6 @@ try {
   await page.addInitScript(() => {
     window.__storyBuilds = [];
     window.__VSEED_AFTER_BUILD_SPEC__ = payload => window.__storyBuilds.push(payload);
-    let module;
-    Object.defineProperty(window, 'VTable', {configurable:true, get:()=>module, set(value) {
-      module = new Proxy(value, {get(target, key) {
-        const item = target[key];
-        if (!['ListTable','PivotTable','PivotChart'].includes(key) || typeof item !== 'function') return item;
-        return new Proxy(item, {construct(Type, args) {
-          const instance = Reflect.construct(Type, args);
-          window.__evalTable = instance;
-          return instance;
-        }});
-      }});
-    }});
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/${expected.html}`, {waitUntil:'networkidle',timeout:60000});
   await page.waitForFunction(() => [...document.querySelectorAll('canvas')].some(c => c.width > 0 && c.height > 0), null, {timeout:15000});
@@ -142,29 +130,6 @@ try {
     } catch(error) {return {passed:false,reason:String(error)};}
   }, expected.engine === 'story');
   checks.push({name:'nonBlankCanvas',...rendering});
-  if (expected.engine === 'vchart') {
-    const spec = await page.evaluate(() => JSON.stringify(window.vchart?.getSpec?.() ?? null, (key, value) => typeof value === 'function' ? '[function]' : value, 2));
-    await fs.writeFile(path.join(directory, 'runtime-spec.json'), spec + '\n');
-  }
-  const records = () => page.evaluate(() => window.__evalTable?.records ?? window.vchart?.getSpec()?.data?.flatMap(d => d.values ?? []) ?? null);
-  if (expected.records) {
-    const csv = (await fs.readFile(path.join(directory,'workspace/inputs',expected.records),'utf8')).trim().split(/\r?\n/).map(row=>row.split(','));
-    const fields = csv.shift();
-    const wanted = csv.map(row=>Object.fromEntries(fields.map((key,i)=>[key,row[i]])));
-    const normalize = rows => rows?.map(row=>fields.map(key=>String(row[key])).join('|')).sort();
-    const actual = await records();
-    checks.push({name:'completeRuntimeRecords',passed:JSON.stringify(normalize(actual))===JSON.stringify(normalize(wanted)),actual,expected:wanted});
-    if (expected.filter) {
-      for(const quarter of ['Q1','Q2','all']) {
-        await page.selectOption('#quarter-filter',quarter);
-        await page.waitForTimeout(300);
-        const actual = await records();
-        const selected = wanted.filter(row=>quarter==='all'||row.quarter===quarter);
-        checks.push({name:`filter:${quarter}`,passed:JSON.stringify(normalize(actual))===JSON.stringify(normalize(selected)),actual,expected:selected});
-        await page.screenshot({path:path.join(directory,`filter-${quarter}.png`),fullPage:true});
-      }
-    }
-  }
 } catch(error) {
   const reason = String(error);
   checks.push({name:'browserExecution',passed:false,reason});

@@ -1,18 +1,18 @@
-# VisActor Agent Skills
+# VisActor Skills
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Chart, table, data storytelling, editorial magazine and biography poster skills for agents that can read files and run commands. Generate charts, tables, HTML data stories, Web-PPT presentations, editorial image series and biography posters, and diagnose chart configuration problems.
+Agent skills for the VisActor visualization ecosystem. Create data stories, editorial image series and biography posters with independently installable Skills. VChart and VTable Skills are maintained in their respective library repositories.
 
 ## Skills
 
-| Skill | Tasks |
-| --- | --- |
-| [vchart-skill](skills/vchart-skill/SKILL.md) | Chart generation, diagnosis, image replication and React integration |
-| [vtable-skill](skills/vtable-skill/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT |
-| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
-| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
+| Skill | Tasks | Source |
+| --- | --- | --- |
+| [VChart Skill](https://github.com/VisActor/VChart/blob/develop/skills/vchart-development-assistant/SKILL.md) | Chart generation, diagnosis, image replication and React integration | [VisActor/VChart](https://github.com/VisActor/VChart) |
+| [VTable Skill](https://github.com/VisActor/VTable/blob/develop/skills/vtable-development-assistant/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis | [VisActor/VTable](https://github.com/VisActor/VTable) |
+| [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT | This repository |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers | This repository |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines | This repository |
 
 Each skill includes its instructions, local references, templates and scripts. No separate VisActor CLI, MCP server, model key or hosted VisActor API is required. The host agent supplies the model.
 
@@ -23,8 +23,8 @@ Each skill includes its instructions, local references, templates and scripts. N
 Run these commands in the project where you want to use the Skills:
 
 ```bash
-npx skills add VisActor/skills --skill vchart-skill
-npx skills add VisActor/skills --skill vtable-skill
+npx skills add VisActor/VChart --skill vchart-development-assistant
+npx skills add VisActor/VTable --skill vtable-development-assistant
 npx skills add VisActor/skills --skill data-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
@@ -36,12 +36,10 @@ Requirements:
 
 - Node.js and npm to run the installation commands above.
 - An agent with filesystem and shell tools, plus its own model access.
-- Python 3.9+ for VChart/VTable; Python 3.10+ and Node.js (JavaScript validation) for data-storytelling. Python scripts use the standard library.
-- A browser and internet access for generated HTML. Templates fetch pinned VChart/VTable, React (when needed), and Monaco packages from the public unpkg CDN. Data-storytelling also loads pinned VSeed and GSAP. This is not a fully offline bundle.
+- Python 3.10+ and Node.js (JavaScript validation) for data-storytelling. Python scripts use the standard library. See the upstream repositories for VChart/VTable Skill requirements.
+- A browser and internet access for generated HTML. Data-storytelling loads pinned VSeed, VChart, VTable and GSAP packages from the public unpkg CDN.
 
 Editorial magazines and biography posters additionally require Python 3.10+, Pillow, Playwright and Chromium/Chrome; install the selected Skill's `requirements.txt`. Fonts load from a Feishu CDN mirror with system fallbacks. Life Chronicle also loads a pinned VInfo SDK; see its [environment guide](skills/life-chronicle/references/environment.md). Image search, generation and cutout tools come from the host. Magazine templates contain placeholders that must be replaced for delivery.
-
-VChart knowledge search reads bundled example/SOP files locally. It uses keyword matching, not a hosted semantic search service; unmatched questions fall back to the included type and API references.
 
 ## Use
 
@@ -64,8 +62,6 @@ This section is for contributors editing Skills or running local tests. The defa
 From the root of your local repository, install the working copy of a Skill:
 
 ```bash
-npx skills add ./skills/vchart-skill
-npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
 npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
@@ -87,15 +83,13 @@ Fixed browser smoke cases are maintained by Skill in [evals/smoke/](evals/smoke/
 
 ### Model API task debugging
 
-For users with model API access, a lightweight harness can load a selected Skill and run a fixed case or a custom prompt with input files. It supports OpenAI-compatible Chat Completions. Treat it as an experimental route for bounded VChart/VTable tasks with clear inputs and outputs, not as a validated replacement for a coding agent. For end-to-end data storytelling and everyday interactive debugging, use Codex or Claude Code.
+A lightweight harness can load this repository's Skill through OpenAI-compatible Chat Completions, run fixed or custom tasks, and retain request, tool, usage and artifact logs. Use it for bounded script/task debugging; end-to-end data storytelling is recommended in Codex or Claude Code.
 
-For fixed prompt/data runs, observable execution logs, browser checks and screenshots, see [evals/README.md](evals/README.md). These are maintainer tools, not part of the installed skills. The default runner uses a configurable model API with your own key; Codex/Claude Code are not required. Model calls may incur usage charges. Copy evals/model.example.json to the ignored evals/model.local.json, configure the endpoint/model/key environment variable, then run `uv run python evals/scripts/run.py --case vchart-grouped --browser`. See the quickstart for setup and usage limits.
-
-The [case catalog](evals/cases/README.md) includes 32 VChart tasks, 4 VTable tasks and 5 data storytelling tasks, organized by Skill with explicit acceptance criteria. The runner defaults to the 8-task VChart core group; curated coverage does not mean every task has been executed.
+See the [evaluation guide](evals/README.md) for setup and commands. The [case catalog](evals/cases/README.md) contains five data-storytelling tasks; browser smoke covers HTML stories and Web-PPT. Model tasks are excluded from CI and may incur provider charges.
 
 ## Versioning
 
-Skills are versioned together at repository level. Each formal Skills release is identified by a Git tag covering the Skill instructions, references, templates and scripts. Individual Skills do not have separate version numbers.
+Skills maintained here are versioned together at repository level. Each formal Skills release is identified by a Git tag covering the Skill instructions, references, templates and scripts. VChart and VTable Skill versions are managed by their respective repositories.
 
 Use a release tag or commit SHA to identify the version when reporting an issue or reproducing a result; branch contents can change. Dependency versions such as VTable `1.26.8` identify the underlying library, not the Skill release. Historical VMind SDK tags remain unchanged and belong to the earlier SDK.
 

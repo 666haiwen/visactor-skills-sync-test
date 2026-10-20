@@ -8,8 +8,6 @@
 
 | Skill | 用例数 | 分组 | 用例说明 |
 | --- | --- | --- | --- |
-| `vchart-skill` | 32 | core（8）、extended（24） | [VChart](vchart-skill/README.zh-CN.md) |
-| `vtable-skill` | 4 | core（4） | [VTable](vtable-skill/README.zh-CN.md) |
 | `data-storytelling` | 5 | core (3), extended (2) | [Data storytelling](data-storytelling/README.zh-CN.md) |
 
 ## 目录结构
@@ -34,21 +32,17 @@ cases/
 先按 [评测指南](../README.zh-CN.md) 配置环境和模型，在仓库根目录执行：
 
 ```bash
-# 列出所有 Skill 的全部用例，不调用模型
+# 列出全部用例，不调用模型
 uv run python evals/scripts/run.py --group all --list
 
-# 选择 Skill，再选择该 Skill 内的分组
-uv run python evals/scripts/run.py --skill vchart-skill --group core --browser
-uv run python evals/scripts/run.py --skill vchart-skill --group extended --list
-uv run python evals/scripts/run.py --skill vtable-skill --group core --browser
-
-# 单独运行一个用例
-uv run python evals/scripts/run.py --skill vtable-skill --case vtable-list --browser
+uv run python evals/scripts/run.py --skill data-storytelling --group core --browser
+uv run python evals/scripts/run.py --skill data-storytelling --group extended --list
+uv run python evals/scripts/run.py --case story-retention-html --browser
 ```
 
-`--skill` 选择用例目录，`--group` 选择该 Skill 内的分组。`--group all` 在指定 Skill 时选择该 Skill 的全部用例，未指定 Skill 时选择所有用例。默认仍为 VChart 的 core 组；仅指定 Skill 时选择其 core 组。当前 VTable 没有 extended 组，选择空分组会报错。
+`--skill` 选择用例目录，`--group` 选择该 Skill 内的分组。`--group all` 在指定 Skill 时选择该 Skill 的全部用例，未指定 Skill 时选择所有用例。默认执行 data-storytelling 的 core 组；选择空分组会报错。
 
-现有 case ID 在所有 Skill 间保持唯一，因此也可直接用 `--case vtable-list`；重复传入 `--case` 可选择多个任务。显式指定 case 时优先于 group，但仍受 `--skill` 限制。自定义任务继续使用 `--skill` 搭配 `--prompt-file`，详见评测指南。
+现有 case ID 在所有 Skill 间保持唯一，因此也可直接用 `--case story-retention-html`；重复传入 `--case` 可选择多个任务。显式指定 case 时优先于 group，但仍受 `--skill` 限制。自定义任务继续使用 `--skill` 搭配 `--prompt-file`，详见评测指南。
 
 ## 新增用例
 

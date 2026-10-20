@@ -1,3 +1,4 @@
+import base64
 import importlib.util
 import json
 import os
@@ -14,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("api_agent", ROOT / "evals/scripts/api_agent.py")
 api = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(api)
-SKILL = "vchart-skill"
+SKILL = "data-storytelling"
 
 
 @pytest.fixture
@@ -70,7 +71,16 @@ def test_api_config_rejects_embedded_credentials_and_unknown_options(tmp_path):
 
 def test_local_config_accepts_key_without_returning_it_to_logged_config(tmp_path, monkeypatch):
     path = tmp_path / "model.local.json"
-    path.write_text(json.dumps({"base_url": "https://example.invalid/v1", "model": "test", "api_key_env": "TEST_SKILLS_KEY", "api_key": "local-test-secret"}))
+    path.write_text(
+        json.dumps(
+            {
+                "base_url": "https://example.invalid/v1",
+                "model": "test",
+                "api_key_env": "TEST_SKILLS_KEY",
+                "api_key": "local-test-secret",
+            }
+        )
+    )
     config = api.load_config(path)
     assert os.environ.get("TEST_SKILLS_KEY") == "local-test-secret"
     assert "api_key" not in config
@@ -127,21 +137,26 @@ def test_script_tool_runs_real_generator_and_rejects_arbitrary_execution(workspa
     tools = api.WorkspaceTools(workspace, SKILL, 2000)
     tools.call(
         "write_file",
-        {"path": "outputs/spec.js", "content": "const spec = { type: 'bar', data: [] };"},
+        {
+            "path": "outputs/plan.md",
+            "content": (
+                ROOT / "evals/smoke/data-storytelling/story-html/inputs/plan.md"
+            ).read_text(),
+        },
         10,
     )
     result = tools.call(
         "run_skill_script",
-        {"script": "generate_demo_html.py", "args": ["--spec-file", "outputs/spec.js"]},
+        {"script": "validate_story_plan.py", "args": ["--plan-file", "outputs/plan.md"]},
         10,
     )
-    assert result["exit_code"] == 0 and (workspace / "outputs/demo.html").is_file()
+    assert result["exit_code"] == 0
     with pytest.raises(ValueError):
         tools.call("run_skill_script", {"script": "../../other.py", "args": []}, 10)
     with pytest.raises(ValueError):
         tools.call(
             "run_skill_script",
-            {"script": "generate_demo_html.py", "args": ["--output", "../escaped.html"]},
+            {"script": "compose_story.py", "args": ["--output", "../escaped.html"]},
             10,
         )
 
@@ -209,10 +224,12 @@ def test_incomplete_api_execution_is_not_a_success(workspace, config, kind):
 
 
 def test_image_input_is_sent_but_base64_is_not_persisted(workspace, config):
-    image = ROOT / "evals/cases/vchart-skill/inputs/reference-bars.png"
-    # Find by fixture name to keep the input directory layout independent of this test.
-    image = next((ROOT / "evals/cases").rglob(image.name))
-    shutil.copyfile(image, workspace / "inputs/reference.png")
+    image = workspace / "inputs/reference.png"
+    image.write_bytes(
+        base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lmmxQgAAAABJRU5ErkJggg=="
+        )
+    )
     payloads = []
 
     def transport(config, key, payload, timeout):
@@ -286,7 +303,25 @@ def test_default_runner_uses_http_api_without_codex(tmp_path, monkeypatch, custo
             }
         )
     )
-    selection = ["--case", "vchart-qa-label"]
+    monkeypatch.setattr(
+        runner,
+        "load_tasks",
+        lambda: [
+            {
+                "id": "fixture-answer",
+                "skill": SKILL,
+                "prompt": "Explain these observations.",
+                "inputs": [],
+                "group": "core",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        runner,
+        "load_expectations",
+        lambda task: {"answerOnly": True, "artifacts": [], "review": ["Explain the observations"]},
+    )
+    selection = ["--case", "fixture-answer"]
     if custom:
         prompt_file = tmp_path / "prompt.md"
         prompt_file.write_text("Explain how to show labels for my supplied data.")
@@ -309,7 +344,7 @@ def test_default_runner_uses_http_api_without_codex(tmp_path, monkeypatch, custo
         server.shutdown()
         server.server_close()
         thread.join()
-    directory = next((tmp_path / "evals/runs").glob("*/custom" if custom else "*/vchart-qa-label"))
+    directory = next((tmp_path / "evals/runs").glob("*/custom" if custom else "*/fixture-answer"))
     assert json.loads((directory / "metadata.json").read_text())["runner"] == "api"
     assert json.loads((directory / "result.json").read_text())["status"] == "needs-review"
     assert json.loads((directory / "usage.json").read_text())["totalTokens"] == 20

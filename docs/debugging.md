@@ -11,14 +11,14 @@ The following local setup uses a fresh directory so it does not overwrite an exi
 ```bash
 debug_workspace="$(mktemp -d)"
 mkdir -p "$debug_workspace/inputs" "$debug_workspace/outputs"
-cp evals/cases/vchart-skill/inputs/sales.csv "$debug_workspace/inputs/"
+cp evals/cases/data-storytelling/inputs/monthly_retention.csv "$debug_workspace/inputs/"
 ```
 
 Choose one host. For **Codex**:
 
 ```bash
 mkdir -p "$debug_workspace/.agents/skills"
-cp -R skills/vchart-skill skills/vtable-skill skills/data-storytelling "$debug_workspace/.agents/skills/"
+cp -R skills/data-storytelling "$debug_workspace/.agents/skills/"
 cd "$debug_workspace"
 codex
 ```
@@ -27,20 +27,20 @@ For **Claude Code**, instead run this from the repository root after the shared 
 
 ```bash
 mkdir -p "$debug_workspace/.claude/skills"
-cp -R skills/vchart-skill skills/vtable-skill skills/data-storytelling "$debug_workspace/.claude/skills/"
+cp -R skills/data-storytelling "$debug_workspace/.claude/skills/"
 cd "$debug_workspace"
 claude
 ```
 
-You can also open that workspace in the corresponding app. VChart/VTable scripts need Python 3.9+; data-storytelling needs Python 3.10+ and Node.js for JS checks, and generated HTML needs a browser and public CDN access. The API harness, uv environment and its model configuration are not required for this path.
+You can also open that workspace in the corresponding app. Data-storytelling needs Python 3.10+ and Node.js for JS checks, and generated HTML needs a browser and public CDN access. The API harness, uv environment and its model configuration are not required for this path.
 
 In Codex CLI, send:
 
 ```text
-$vchart-skill Use every row in inputs/sales.csv to build a grouped bar chart comparing sales by region and quarter. Write editable source and runnable HTML under outputs/.
+$data-storytelling Analyze every row in inputs/monthly_retention.csv and create an HTML data story. Write the plan, intermediate files and final HTML under outputs/.
 ```
 
-In Claude Code, send the same request with `/vchart-skill` instead of `$vchart-skill`. For a table, select `vtable-skill` and ask for a sortable detail table. Inspect the generated source and HTML, then continue the conversation with changes or errors to investigate.
+In Claude Code, send the same request with `/data-storytelling` instead of `$data-storytelling`. Inspect the generated source and HTML, then continue the conversation with changes or errors to investigate.
 
 After editing this repository's Skill, refresh the installed copy before retesting (or create another fresh workspace with these steps). Record the host/model, prompt, inputs and observed result when reporting a problem. Logs and tool access in this route are managed by the host; they do not automatically appear in `evals/runs/`.
 
@@ -48,25 +48,24 @@ Historical generation/browser runs in this migration used Codex. Claude Code's s
 
 ## Alternative: a simple model API harness
 
-Use this when you have an API endpoint and want to experiment with a bounded VChart/VTable task whose inputs and outputs are clear. It loads one Skill and provides a limited tool loop, but has not been validated as a reliable end-to-end evaluator even for every VChart/VTable case. Use Codex or Claude Code for data-storytelling end-to-end tasks, multi-step debugging and everyday interactive work. Only OpenAI-compatible Chat Completions with tool calling and token usage is supported; native protocols are outside the current scope.
+Use this when you have an API endpoint and want to investigate a bounded task or a bundled Story script. It loads the selected Skill and provides a limited tool loop; it has not completed a live end-to-end Story evaluation. Use Codex or Claude Code for data-storytelling end-to-end tasks, multi-step debugging and everyday interactive work. Only OpenAI-compatible Chat Completions with tool calling and token usage is supported; native protocols are outside the current scope.
 
 Follow [API setup](../evals/README.md#contributor-quickstart) to configure your endpoint, model and key environment variable. Run a built-in case with:
 
 ```bash
-uv run python evals/scripts/run.py --case vchart-grouped --browser
+uv run python evals/scripts/run.py --case story-retention-html --browser
 ```
 
 Or supply a task without editing the case catalogue:
 
 ```bash
 uv run python evals/scripts/run.py \
-  --skill vchart-skill \
-  --prompt-file evals/examples/chart-prompt.md \
-  --input evals/cases/vchart-skill/inputs/sales.csv \
-  --browser --html demo.html
+  --skill data-storytelling \
+  --prompt-file evals/examples/story-prompt.md \
+  --input evals/cases/data-storytelling/inputs/monthly_retention.csv
 ```
 
-Use `--skill vtable-skill` for tables. Replace the prompt/data paths with your own files. Relative paths are resolved from your shell's current directory. Each `--input` is copied into `inputs/<filename>`; repeat the flag for multiple files with distinct basenames. Inputs are optional for explanatory tasks. All generated artifacts go to the run workspace's `outputs/`.
+Replace the prompt/data paths with your own files. Relative paths are resolved from your shell's current directory. Each `--input` is copied into `inputs/<filename>`; repeat the flag for multiple files with distinct basenames. Inputs are optional for explanatory tasks. All generated artifacts go to the run workspace's `outputs/`.
 
 `--html` names an output HTML path relative to `outputs/`; the runner includes it in the task instructions and checks that it exists. With `--browser`, this path is required and rendering checks/screenshots run after generation. Omit both flags for text answers or tasks you will inspect yourself. Custom runs check process completion and a nonempty final answer, plus any explicitly requested HTML/browser checks; they do not invent case-specific semantic or data assertions. Success remains `needs-review`.
 

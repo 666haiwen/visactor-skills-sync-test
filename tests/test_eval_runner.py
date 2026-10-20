@@ -48,10 +48,12 @@ def test_timeout_is_a_failure_and_keeps_early_output(tmp_path):
 
 
 def test_visual_review_is_never_implied_by_file_existence(tmp_path):
-    task = next(t for t in runner.load_tasks() if t["id"] == "vchart-grouped")
+    task = next(t for t in runner.load_tasks() if t["id"] == "story-retention-html")
     workspace = runner.prepare(task, tmp_path / "case")
-    for filename in ["spec.js", "demo.html"]:
-        (workspace / "outputs" / filename).write_text("fixture")
+    for filename in runner.load_expectations(task)["artifacts"]:
+        output = workspace / "outputs" / filename
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("fixture")
     result = runner.evaluate_files(task, tmp_path / "case", {"exitCode": 0, "timedOut": False})
     assert result["status"] == "needs-review"
     assert result["visualReview"]["status"] == "not-run"
@@ -59,10 +61,14 @@ def test_visual_review_is_never_implied_by_file_existence(tmp_path):
 
 
 def test_answer_only_task_rejects_unwanted_artifacts(tmp_path):
-    task = next(t for t in runner.load_tasks() if t["id"] == "vchart-qa-label")
+    task = {"id": "explanation", "skill": "data-storytelling", "inputs": []}
     directory = tmp_path / "case"
     workspace = runner.prepare(task, directory)
-    (directory / "final-response.md").write_text("Use label.visible.")
+    runner.write_json(
+        directory / "expectations.json",
+        {"answerOnly": True, "artifacts": [], "review": ["Answer the question"]},
+    )
+    (directory / "final-response.md").write_text("Explain the supplied observations.")
     (workspace / "outputs/demo.html").write_text("unrequested")
     result = runner.evaluate_files(task, directory, {"exitCode": 0})
     assert result["status"] == "failed"
@@ -83,6 +89,9 @@ def test_continuation_cannot_pass_with_unchanged_source(tmp_path):
     task = runner.load_tasks()[0]
     directory = tmp_path / "case"
     workspace = runner.prepare(task, directory)
+    runner.write_json(
+        directory / "expectations.json", {"artifacts": ["spec.js", "demo.html"], "review": []}
+    )
     for name in ["spec.js", "demo.html"]:
         (workspace / "outputs" / name).write_text("original")
     result = runner.evaluate_files(
@@ -101,7 +110,7 @@ def test_custom_inputs_are_copied_without_modifying_sources(tmp_path):
     prompt.write_text("Explain the provided data")
     data = tmp_path / "input.csv"
     data.write_text("x,y\n1,2\n")
-    task = runner.custom_task("vtable-skill", prompt, [data], None)
+    task = runner.custom_task("data-storytelling", prompt, [data], None)
     workspace = runner.prepare(task, tmp_path / "custom")
     assert (workspace / "inputs/input.csv").read_bytes() == data.read_bytes()
     (workspace / "inputs/input.csv").write_text("changed copy")
@@ -112,13 +121,13 @@ def test_custom_task_rejects_missing_or_duplicate_inputs(tmp_path):
     prompt = tmp_path / "prompt.md"
     prompt.write_text("Task")
     with pytest.raises(ValueError, match="must be a file"):
-        runner.custom_task("vtable-skill", prompt, [tmp_path / "absent"], None)
+        runner.custom_task("data-storytelling", prompt, [tmp_path / "absent"], None)
     for name in ["first", "second"]:
         (tmp_path / name).mkdir()
         (tmp_path / name / "same.csv").touch()
     with pytest.raises(ValueError, match="Duplicate"):
         runner.custom_task(
-            "vtable-skill",
+            "data-storytelling",
             prompt,
             [tmp_path / "first/same.csv", tmp_path / "second/same.csv"],
             None,
@@ -130,7 +139,7 @@ def test_custom_html_must_be_within_outputs(tmp_path, html):
     prompt = tmp_path / "prompt.md"
     prompt.write_text("Task")
     with pytest.raises(ValueError, match="relative .html"):
-        runner.custom_task("vtable-skill", prompt, [], html)
+        runner.custom_task("data-storytelling", prompt, [], html)
 
 
 def test_custom_task_checks_answer_without_inventing_artifact_requirements(tmp_path):
@@ -148,7 +157,7 @@ def test_custom_task_checks_answer_without_inventing_artifact_requirements(tmp_p
 
 
 @pytest.mark.parametrize(
-    "extra", [["--case", "vchart-grouped"], ["--group", "core"], ["--browser"]]
+    "extra", [["--case", "story-retention-html"], ["--group", "core"], ["--browser"]]
 )
 def test_custom_cli_rejects_ambiguous_selection_before_model_access(tmp_path, monkeypatch, extra):
     prompt = tmp_path / "prompt.md"
@@ -156,7 +165,7 @@ def test_custom_cli_rejects_ambiguous_selection_before_model_access(tmp_path, mo
     monkeypatch.setattr(
         sys,
         "argv",
-        ["run.py", "--skill", "vchart-skill", "--prompt-file", str(prompt), *extra],
+        ["run.py", "--skill", "data-storytelling", "--prompt-file", str(prompt), *extra],
     )
     with pytest.raises(SystemExit) as failed:
         runner.main()
@@ -166,11 +175,10 @@ def test_custom_cli_rejects_ambiguous_selection_before_model_access(tmp_path, mo
 @pytest.mark.parametrize(
     "skill,cases,group,count,skills",
     [
-        (None, None, None, 8, {"vchart-skill"}),
-        ("vchart-skill", None, "extended", 24, {"vchart-skill"}),
-        ("vchart-skill", None, "all", 32, {"vchart-skill"}),
-        ("vtable-skill", None, None, 4, {"vtable-skill"}),
-        # Runtime skills may be installed before fixed model cases are added.
+        (None, None, None, 3, {"data-storytelling"}),
+        ("data-storytelling", None, "extended", 2, {"data-storytelling"}),
+        ("data-storytelling", None, "all", 5, {"data-storytelling"}),
+        # Runtime Skills may exist before fixed model cases are added.
         (
             None,
             None,
@@ -178,7 +186,7 @@ def test_custom_cli_rejects_ambiguous_selection_before_model_access(tmp_path, mo
             len(runner.load_tasks()),
             {task["skill"] for task in runner.load_tasks()},
         ),
-        (None, ["vtable-list"], None, 1, {"vtable-skill"}),
+        (None, ["story-retention-html"], None, 1, {"data-storytelling"}),
     ],
 )
 def test_fixed_selection_scopes_groups_to_skills(skill, cases, group, count, skills):
@@ -189,34 +197,34 @@ def test_fixed_selection_scopes_groups_to_skills(skill, cases, group, count, ski
 
 @pytest.mark.parametrize(
     "cases,group,message",
-    [(["vchart-grouped"], None, "Unknown case ids"), (None, "extended", "No cases match")],
+    [(["removed-chart"], None, "Unknown case ids"), (None, "missing-group", "No cases match")],
 )
 def test_invalid_skill_selection_fails_before_model_access(cases, group, message):
     with pytest.raises(ValueError, match=message):
-        runner.select_tasks(runner.load_tasks(), "vtable-skill", cases, group)
+        runner.select_tasks(runner.load_tasks(), "data-storytelling", cases, group)
 
 
 def test_skill_cli_lists_fixed_cases_without_custom_prompt_or_credentials(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["run.py", "--skill", "vtable-skill", "--list"])
+    monkeypatch.setattr(sys, "argv", ["run.py", "--skill", "data-storytelling", "--list"])
     runner.main()
     lines = capsys.readouterr().out.splitlines()
-    assert len(lines) == 4
-    assert all(line.startswith("vtable-") and ", core," in line for line in lines)
+    assert len(lines) == 3
+    assert all(line.startswith("story-") and ", core," in line for line in lines)
 
 
 def test_preparation_uses_inputs_from_the_selected_catalog(tmp_path, monkeypatch):
     catalogs = tmp_path / "cases"
     for skill, value in [
-        ("vchart-skill", "chart"),
-        ("vtable-skill", "table"),
+        ("other-skill", "other"),
+        ("data-storytelling", "story"),
     ]:
         folder = catalogs / skill / "inputs"
         folder.mkdir(parents=True)
         (folder / "same.csv").write_text(value)
     monkeypatch.setattr(runner, "CASES", catalogs)
-    task = {"id": "test", "skill": "vtable-skill", "inputs": ["same.csv"]}
+    task = {"id": "test", "skill": "data-storytelling", "inputs": ["same.csv"]}
     workspace = runner.prepare(task, tmp_path / "run")
-    assert (workspace / "inputs/same.csv").read_text() == "table"
+    assert (workspace / "inputs/same.csv").read_text() == "story"
 
 
 def test_saved_expectations_do_not_depend_on_current_catalog(tmp_path, monkeypatch):
@@ -231,13 +239,17 @@ def test_saved_expectations_do_not_depend_on_current_catalog(tmp_path, monkeypat
 @pytest.mark.parametrize("problem", ["mismatched-skill", "duplicate-id"])
 def test_catalog_loader_rejects_ambiguous_ownership(tmp_path, monkeypatch, problem):
     catalogs = tmp_path / "cases"
-    for skill in runner.SKILLS:
-        folder = catalogs / skill
-        folder.mkdir(parents=True)
-        runner.write_json(
-            folder / "tasks.json",
-            [{"id": "duplicate", "skill": "wrong" if problem == "mismatched-skill" else skill}],
-        )
+    folder = catalogs / "data-storytelling"
+    folder.mkdir(parents=True)
+    tasks = [
+        {
+            "id": "duplicate",
+            "skill": "wrong" if problem == "mismatched-skill" else "data-storytelling",
+        }
+    ]
+    if problem == "duplicate-id":
+        tasks.append(dict(tasks[0]))
+    runner.write_json(folder / "tasks.json", tasks)
     monkeypatch.setattr(runner, "CASES", catalogs)
     with pytest.raises(ValueError, match="does not belong|Duplicate case id"):
         runner.load_tasks()

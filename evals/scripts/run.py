@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CASES = ROOT / "evals/cases"
 SKILLS = sorted(path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md"))
-DEFAULT_SKILL = "vchart-skill"
+DEFAULT_SKILL = "data-storytelling"
 
 
 def load_tasks() -> list[dict]:
@@ -259,7 +259,7 @@ def main() -> None:
     parser.add_argument(
         "--skill",
         choices=SKILLS,
-        help="Select a fixed case catalog or the Skill for --prompt-file (default catalog: VChart)",
+        help="Select a fixed case catalog or the Skill for --prompt-file (default catalog: data-storytelling)",
     )
     parser.add_argument("--prompt-file", type=Path, help="UTF-8 prompt file for a custom task")
     parser.add_argument(
@@ -390,8 +390,6 @@ def main() -> None:
                 "artifacts": [args.html] if args.html else [],
                 "html": args.html,
                 "engine": {
-                    "vchart-skill": "vchart",
-                    "vtable-skill": "vtable",
                     "data-storytelling": "story",
                 }.get(task["skill"]),
                 "requireAnswer": True,

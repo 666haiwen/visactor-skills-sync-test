@@ -39,13 +39,3 @@ def test_catalog_fixture_inventory_matches_input_bytes(catalog):
         assert (
             hashlib.sha256((folder / "inputs" / name).read_bytes()).hexdigest() == record["sha256"]
         )
-
-
-def test_selection_covers_every_vchart_task_once():
-    folder = ROOT / "evals/cases/vchart-skill"
-    tasks = json.loads((folder / "tasks.json").read_text())
-    selection = json.loads((folder / "selection.json").read_text())
-    ids = [c["id"] for c in selection["cases"]]
-    assert len(ids) == len(set(ids))
-    assert set(ids) == {t["id"] for t in tasks}
-    assert all(c["reason"] and c["origin"] for c in selection["cases"])

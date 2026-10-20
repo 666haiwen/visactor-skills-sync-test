@@ -26,7 +26,7 @@ export async function useLocalAssets(page, origin, evalsDirectory) {
     await fs.readFile(path.join(evalsDirectory, 'package.json'), 'utf8')
   );
   const versions = Object.fromEntries(
-    ['@visactor/vchart', '@visactor/vtable', 'monaco-editor', '@visactor/vseed', 'story-vchart', 'gsap'].map(name => [name, devDependencies[name]])
+    ['@visactor/vchart', '@visactor/vtable', '@visactor/vseed', 'gsap'].map(name => [name, devDependencies[name]])
   );
   const failures = [];
   await page.route('**/*', async route => {

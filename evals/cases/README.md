@@ -8,8 +8,6 @@ This catalog is for prompt-based Agent/model tasks. Fixed browser smoke configur
 
 | Skill | Cases | Groups | Guide |
 | --- | --- | --- | --- |
-| `vchart-skill` | 32 | core (8), extended (24) | [VChart](vchart-skill/README.md) |
-| `vtable-skill` | 4 | core (4) | [VTable](vtable-skill/README.md) |
 | `data-storytelling` | 5 | core (3), extended (2) | [Data storytelling](data-storytelling/README.md) |
 
 ## Directory structure
@@ -34,21 +32,17 @@ cases/
 Set up the environment and model using the [evaluation guide](../README.md), then run from the repository root:
 
 ```bash
-# List every case across Skills without calling a model
+# List every case without calling a model
 uv run python evals/scripts/run.py --group all --list
 
-# Select a Skill, then a group within that Skill
-uv run python evals/scripts/run.py --skill vchart-skill --group core --browser
-uv run python evals/scripts/run.py --skill vchart-skill --group extended --list
-uv run python evals/scripts/run.py --skill vtable-skill --group core --browser
-
-# Run one case
-uv run python evals/scripts/run.py --skill vtable-skill --case vtable-list --browser
+uv run python evals/scripts/run.py --skill data-storytelling --group core --browser
+uv run python evals/scripts/run.py --skill data-storytelling --group extended --list
+uv run python evals/scripts/run.py --case story-retention-html --browser
 ```
 
-`--skill` selects a catalog; `--group` selects a group within it. With a Skill selected, `--group all` selects all its cases; without a Skill, it selects every case. The default remains VChart core. Selecting only a Skill uses its core group. VTable currently has no extended group; an empty selection is an error.
+`--skill` selects a catalog; `--group` selects a group within it. With a Skill selected, `--group all` selects all its cases; without a Skill, it selects every case. The default is the data-storytelling core group. An empty selection is an error.
 
-Case IDs remain unique across Skills, so `--case vtable-list` also works directly. Repeat `--case` to select multiple tasks. Explicit cases override group selection but remain constrained by `--skill`. Custom tasks still use `--skill` with `--prompt-file`; see the evaluation guide.
+Case IDs remain unique across Skills, so `--case story-retention-html` also works directly. Repeat `--case` to select multiple tasks. Explicit cases override group selection but remain constrained by `--skill`. Custom tasks still use `--skill` with `--prompt-file`; see the evaluation guide.
 
 ## Add cases
 

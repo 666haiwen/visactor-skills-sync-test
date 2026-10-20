@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
@@ -14,7 +12,7 @@ from run import ROOT, SKILLS, prepare, write_json
 from story_smoke import build_story
 
 CASES = ROOT / "evals/smoke"
-ENGINES = {"vchart-skill": "vchart", "vtable-skill": "vtable", "data-storytelling": "story"}
+ENGINES = {"data-storytelling": "story"}
 
 
 def filename(value: str) -> str:
@@ -44,21 +42,16 @@ def load_cases(root: Path = CASES) -> list[dict]:
         if any(not file.is_file() for file in input_files):
             raise ValueError(f"Smoke inputs must be flat files: {directory / 'inputs'}")
         inputs = {file.name: str(file) for file in input_files}
-        if config["builder"] == "demo" and skill != "data-storytelling":
-            source = directory / filename(config["source"])
-            if not source.is_file():
-                raise ValueError(f"Missing smoke source: {source}")
-            if config.get("records"):
-                records = filename(config["records"])
-                if records not in inputs:
-                    raise ValueError(f"Missing smoke records: {directory / 'inputs' / records}")
-            numeric = config.get("numericFields", [])
-            if not isinstance(numeric, list) or not all(isinstance(field, str) for field in numeric):
-                raise ValueError(f"numericFields must be a list of field names: {directory}")
-        elif config["builder"] == "story" and skill == "data-storytelling":
+        if config["builder"] == "story" and skill == "data-storytelling":
             if config["target"] not in {"html", "ppt"}:
                 raise ValueError(f"Unsupported story target: {directory}")
-            for name in ["plan.md", "dataset_map.json", "chart_specs.json", "page.json", filename(config["body"])]:
+            for name in [
+                "plan.md",
+                "dataset_map.json",
+                "chart_specs.json",
+                "page.json",
+                filename(config["body"]),
+            ]:
                 if name not in inputs:
                     raise ValueError(f"Missing story input: {directory / 'inputs' / name}")
             if not config.get("preset"):
@@ -68,11 +61,17 @@ def load_cases(root: Path = CASES) -> list[dict]:
         else:
             raise ValueError(f"Unsupported builder for Skill: {directory}")
         filename(expected["html"])
-        cases.append({
-            "id": case_id, "skill": skill, "directory": directory,
-            "config": config, "expectations": expected,
-            "inputs": list(inputs), "inputSources": inputs,
-        })
+        cases.append(
+            {
+                "id": case_id,
+                "skill": skill,
+                "directory": directory,
+                "config": config,
+                "expectations": expected,
+                "inputs": list(inputs),
+                "inputSources": inputs,
+            }
+        )
     if not cases:
         raise ValueError(f"No browser smoke cases found in {root}")
     return cases
@@ -99,46 +98,24 @@ def prepare_case(case: dict, directory: Path) -> Path:
     return workspace
 
 
-def source_code(case: dict, workspace: Path) -> str:
-    config = case["config"]
-    source = (case["directory"] / config["source"]).read_text(encoding="utf-8")
-    if config.get("records"):
-        if "{{RECORDS}}" not in source:
-            raise ValueError(f"Missing {{{{RECORDS}}}} placeholder in {config['source']}")
-        with (workspace / "inputs" / config["records"]).open(encoding="utf-8") as stream:
-            records = list(csv.DictReader(stream))
-        for record in records:
-            for field in config.get("numericFields", []):
-                try:
-                    record[field] = float(record[field])
-                except (KeyError, TypeError, ValueError) as error:
-                    raise ValueError(f"Invalid numeric field {field!r} in {config['records']}") from error
-        source = source.replace("{{RECORDS}}", json.dumps(records, ensure_ascii=False))
-    return source
-
-
 def run_case(case: dict, output: Path) -> dict:
     directory = output / case["id"]
     workspace = prepare_case(case, directory)
     step = "generate"
     try:
-        if case["config"]["builder"] == "story":
-            build_story(workspace, case["config"])
-        else:
-            spec = workspace / "outputs/spec.js"
-            spec.write_text(source_code(case, workspace), encoding="utf-8")
-            result = subprocess.run([
-                sys.executable,
-                str(workspace / ".agents/skills" / case["skill"] / "scripts/generate_demo_html.py"),
-                "--spec-file", str(spec), "--output-dir", str(workspace / "outputs"),
-            ], cwd=workspace, capture_output=True, text=True, timeout=120)
-            (directory / "generate.log").write_text(result.stdout + result.stderr)
-            if result.returncode:
-                raise RuntimeError(f"Demo generation failed; see {directory / 'generate.log'}")
+        build_story(workspace, case["config"])
         step = "browser"
-        result = subprocess.run([
-            "node", str(ROOT / "evals/scripts/check-browser.mjs"), str(directory), "--local-assets",
-        ], capture_output=True, text=True, timeout=120)
+        result = subprocess.run(
+            [
+                "node",
+                str(ROOT / "evals/scripts/check-browser.mjs"),
+                str(directory),
+                "--local-assets",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
         (directory / "browser.log").write_text(result.stdout + result.stderr)
         passed = result.returncode == 0
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
@@ -146,7 +123,11 @@ def run_case(case: dict, output: Path) -> dict:
             partial = ""
             if isinstance(error, subprocess.TimeoutExpired):
                 for stream in [error.stdout, error.stderr]:
-                    partial += stream.decode("utf-8", errors="replace") if isinstance(stream, bytes) else stream or ""
+                    partial += (
+                        stream.decode("utf-8", errors="replace")
+                        if isinstance(stream, bytes)
+                        else stream or ""
+                    )
             (directory / f"{step}.log").write_text(partial + "\n" + str(error))
         (directory / "failure.log").write_text(str(error))
         passed = False

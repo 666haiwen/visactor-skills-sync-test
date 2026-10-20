@@ -24,13 +24,6 @@ DEFAULT_LIMITS = {
     "max_tool_output_chars": 12000,
     "request_timeout_seconds": 90,
 }
-SCRIPTS = {
-    "generate_demo_html.py",
-    "generate_diagnosis_html.py",
-    "generate_diagnosis_react_html.py",
-    "search_knowledge.py",
-}
-
 # Keep imports in the installed Skill; do not expose a --skill-dir override.
 STORY_SCRIPTS = {
     "assemble_story_specs.py": {
@@ -272,69 +265,7 @@ class WorkspaceTools:
     def run_script(self, name: str, args: list[str], timeout: float) -> dict:
         if self.skill.name == "data-storytelling" and name in STORY_SCRIPTS:
             return self.run_story_script(name, args, timeout)
-        if name not in SCRIPTS or not (self.skill / "scripts" / name).is_file():
-            raise ValueError("Not an allowed bundled script")
-        script = self.path(str(self.skill / "scripts" / name))
-        if not isinstance(args, list) or not all(isinstance(a, str) for a in args):
-            raise ValueError("args must be a string array")
-        flags = {"--validate", "--compact", "--help"}
-        options = {
-            "--title",
-            "--desc",
-            "--feature",
-            "--tips",
-            "--spec-file",
-            "--config-file",
-            "--output-dir",
-            "--output",
-            "--kind",
-            "--query",
-            "--limit",
-            "--problem-code",
-            "--problem-title",
-            "--cause",
-            "--suggestion",
-        }
-        normalized = []
-        i = 0
-        while i < len(args):
-            flag = args[i]
-            i += 1
-            if flag in flags:
-                normalized.append(flag)
-                continue
-            if flag not in options and not re.fullmatch(r"--solution-\d+-(title|desc|code)", flag):
-                raise ValueError(f"Unsupported flag {flag}; use separate flag and value arguments")
-            if i >= len(args):
-                raise ValueError(f"Missing value for {flag}")
-            value = args[i]
-            i += 1
-            if flag in {"--spec-file", "--config-file", "--output-dir", "--output"}:
-                value = str(self.path(value, write=flag.startswith("--output")))
-            normalized.extend([flag, value])
-        if (
-            name != "search_knowledge.py"
-            and "--help" not in normalized
-            and not ({"--output-dir", "--output"} & set(normalized))
-        ):
-            normalized.extend(["--output-dir", str(self.roots[-1])])
-        env = {k: v for k, v in os.environ.items() if k in {"PATH", "LANG", "LC_ALL", "TMPDIR"}}
-        result = subprocess.run(
-            [sys.executable, "-B", str(script), *normalized],
-            cwd=self.workspace,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=min(timeout, 30),
-            check=False,
-        )
-        return {
-            "exit_code": result.returncode,
-            "stdout": result.stdout[: self.max_output],
-            "stderr": result.stderr[: self.max_output],
-            "truncated": len(result.stdout) > self.max_output
-            or len(result.stderr) > self.max_output,
-        }
+        raise ValueError("Not an allowed bundled script")
 
     def run_story_script(self, name: str, args: list[str], timeout: float) -> dict:
         relative = name if "/" in name else f"scripts/{name}"

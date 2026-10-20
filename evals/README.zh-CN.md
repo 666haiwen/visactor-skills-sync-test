@@ -4,7 +4,7 @@
 
 通过可配置的模型 API，让指定 Skill 执行固定 prompt 和输入文件。默认 runner 不需要安装或登录 Codex、Claude Code。这是一个带工具调用循环的轻量评测工具，不提供托管服务，也不是通用 Agent 框架。
 
-日常开发 Skill，**推荐先使用 Codex 或 Claude Code**，具体步骤见 [直接调试指南](../docs/debugging.md)。下面的 API harness 是输入、产物边界清晰的 VChart/VTable 任务的实验性入口；它可以让模型实际生成产物并接受固定检查，不只是检查 Skill 加载或工具调用。但结果受限于工具和上下文预算，不推荐用于数据叙事端到端评测。评测命令默认选择 API，并不代表它是整体使用体验的首选。
+日常开发 Skill，**推荐先使用 Codex 或 Claude Code**，具体步骤见 [直接调试指南](../docs/debugging.md)。API harness 是有限步骤任务和内置脚本调试的实验性入口，不推荐用于数据叙事端到端评测。
 
 GitHub CI 只运行确定性回归和固定配置的浏览器 smoke，不执行下文的模型任务。浏览器用例按 Skill 在 [smoke/](smoke/README.zh-CN.md) 集中维护配置、输入与验收标准，运行命令及新增方式见该指南；另见 [持续集成说明](../CONTRIBUTING.md#continuous-integration)。
 
@@ -74,7 +74,7 @@ export SKILLS_EVAL_API_KEY
 ```bash
 cp evals/model.compatible.example.json evals/another-model.local.json
 # 运行前修改基础地址和模型，并导出配置指定的 Key 环境变量。
-uv run python evals/scripts/run.py --config evals/another-model.local.json --case vchart-grouped
+uv run python evals/scripts/run.py --config evals/another-model.local.json --case story-retention-html
 ```
 
 所有 `evals/*.local.json` 均被 Git 忽略。API Key 可以保存在被忽略的本地 JSON 的 `api_key` 字段，或由环境变量提供。同一 endpoint 下的不同模型也可以通过 `--model` 切换。
@@ -105,28 +105,25 @@ uv run python evals/scripts/run.py --group all --list
 先运行一个任务，默认 runner 为 `api`：
 
 ```bash
-uv run python evals/scripts/run.py --case vchart-grouped --browser
+uv run python evals/scripts/run.py --case story-retention-html --browser
 
 # 显式覆盖模型
-uv run python evals/scripts/run.py --case vchart-grouped --model MODEL_ID --browser
+uv run python evals/scripts/run.py --case story-retention-html --model MODEL_ID --browser
 ```
 
 随后选择相关任务组：
 
 ```bash
-# 8 个 VChart 核心任务，包含三轮续改，共 10 次独立模型会话
-uv run python evals/scripts/run.py --skill vchart-skill --group core --browser
+# 3 个核心 Story 任务
+uv run python evals/scripts/run.py --skill data-storytelling --group core --browser
 
-# 4 个 VTable 任务
-uv run python evals/scripts/run.py --skill vtable-skill --group core --browser
-
-# 24 个额外的 VChart 任务
-uv run python evals/scripts/run.py --skill vchart-skill --group extended --browser
+# 2 个扩展 Story 任务
+uv run python evals/scripts/run.py --skill data-storytelling --group extended --browser
 ```
 
-使用 `--group all` 运行全部 41 个任务，或重复传入 `--case` 选择多个任务。显式指定 case 时，以 case 选择为准。`--skill` 选择 Skill；分组在该 Skill 内生效。默认选择 VChart 的 core 组。指定 Skill 后，`--group all` 仅选择该 Skill 的全部任务。`--timeout 600` 设置每轮任务的执行时限。建议从少量任务开始，检查 `usage.json` 后再扩大范围。
+使用 `--group all` 运行全部 5 个任务，或重复传入 `--case` 选择多个任务。显式指定 case 时，以 case 选择为准。`--skill` 选择 Skill；分组在该 Skill 内生效。默认选择 data-storytelling 的 core 组。指定 Skill 后，`--group all` 仅选择该 Skill 的全部任务。`--timeout 600` 设置每轮任务的执行时限。建议从少量任务开始，检查 `usage.json` 后再扩大范围。
 
-API runner 会将所选 `SKILL.md` 加入初始指令，提供四个工具：`read_file`、`list_files`、`write_file` 和 `run_skill_script`。读取范围限于选定的已安装 Skill、任务输入和输出，写入范围限于 outputs。只能执行 Skill 自带的 HTML 生成脚本和知识检索脚本，脚本不会获得模型凭据。参考资料按需读取。检查器的预期结果保存在工作区外，无法通过这些工具读取。这是受限的工具接口，不是操作系统沙箱：应仅运行已审查的 Skill 脚本，在浏览器中执行前检查生成的 HTML。
+API runner 会将所选 `SKILL.md` 加入初始指令，提供四个工具：`read_file`、`list_files`、`write_file` 和 `run_skill_script`。读取范围限于选定的已安装 Skill、任务输入和输出，写入范围限于 outputs。只能执行允许的 Story 计划、组装、素材与校验脚本，脚本不会获得模型凭据。参考资料按需读取。检查器的预期结果保存在工作区外，无法通过这些工具读取。这是受限的工具接口，不是操作系统沙箱：应仅运行已审查的 Skill 脚本，在浏览器中执行前检查生成的 HTML。
 
 ### 5. 查看报告
 
@@ -144,7 +141,7 @@ API runner 会将所选 `SKILL.md` 加入初始指令，提供四个工具：`re
 仅在需要测试该宿主行为时选择此方式。它使用你本地的 Codex 鉴权、配置和额度；API runner 的用量限制不适用于此模式。
 
 ```bash
-uv run python evals/scripts/run.py --runner codex --case vchart-grouped --browser
+uv run python evals/scripts/run.py --runner codex --case story-retention-html --browser
 ```
 
 `--agent /absolute/path/to/codex` 用于指定可执行文件，`--model` 用于覆盖模型。Codex 需要支持 `exec --json --ephemeral --sandbox workspace-write --skip-git-repo-check`。初始历史运行使用的版本为 `0.155.0-alpha.9`。可参考官方 [CLI 说明](https://learn.chatgpt.com/docs/codex/cli)、[鉴权说明](https://learn.chatgpt.com/docs/auth) 和 [配置说明](https://learn.chatgpt.com/docs/config-file/config-basic)。此模式启用 workspace-write 沙箱，禁用交互审批和项目文档注入，同时保留宿主的其他配置。API 与 Codex 模式的工具能力不同，对比结果时应记录这一差异。
@@ -167,11 +164,9 @@ uv run python evals/scripts/run.py --runner codex --case vchart-grouped --browse
 
 `cases/<skill-name>/tasks.json` 保存 prompt 和输入文件名。`cases/<skill-name>/expectations.json` 由检查器读取，不会复制到 Agent 的任务工作区。输入采用可公开分享的合成数据。
 
-当前收录 32 个 VChart 任务、4 个 VTable 任务和 5 个数据叙事任务。各 Skill 的用例目录、分组和验收条件见 [用例说明](cases/README.zh-CN.md)。收录数量与实际执行数量分别统计。VChart 核心组覆盖分组、诊断、堆叠、百分比归一化、空值、解释、澄清和基于文件的续改；扩展组包含 React、图片还原、坐标轴、交互及更多图表类型。
+当前收录 5 个数据叙事任务，分为 3 个核心任务和 2 个扩展任务，输入和验收条件见 [用例说明](cases/README.zh-CN.md)。用例数量不代表已经执行或通过的数量。
 
-三轮续改任务每轮都会启动独立的 Agent 执行，将上一轮文件状态复制到新工作区。它验证的是对已有产物的修改能力，不是会话记忆。每轮都有独立日志和产物，某轮失败后，后续轮次不会执行。纯文本任务不要求 HTML；如果生成了未要求的输出文件，则判定失败。
-
-`--browser` 通过本地回环地址打开生成的 HTML，记录 JavaScript、控制台和网络错误，检查非空白 canvas，保存截图；数据类 case 还会检查运行时记录。季度筛选 case 会实际选择 Q1、Q2 和全部，并对比展示的数据。仅能渲染 canvas，不足以证明图表编码正确或设计质量合格。
+`--browser` 通过本地回环地址打开生成的 HTML，记录页面和网络错误，检查非空图表画布并保存截图；Story 检查会保留编译后的 VSeed 图表配置，Web-PPT 还检查前进和返回翻页。能渲染图表不代表视觉编码或叙事质量正确。
 
 ## 日志
 
@@ -189,7 +184,7 @@ uv run python evals/scripts/run.py --runner codex --case vchart-grouped --browse
 - `final-response.md`：从事件流中提取的已完成助手回复。
 - `workspace/`：已安装的 Skill 快照、输入文件和生成产物。
 - `browser.json`、`browser-command.log`、`screenshot.png`：启用浏览器检查后保存的证据。
-- `runtime-spec.json`：模板暴露图表实例时，从浏览器获取的 VChart 配置；无法获取时为 null。函数体表示为 `[function]`，检查回调行为时应查看源代码。
+- `runtime-spec.json`：从浏览器获取的 VSeed 图表编译结果。函数体表示为 `[function]`，检查回调行为时应查看源代码。
 - `result.json`：产物清单与哈希、自动检查结果，以及单独的视觉复核清单。
 
 工具不会虚构宿主未提供的数据，也无法承诺记录私有模型推理或宿主未暴露的事件。它不会输出整个环境或鉴权文件。进程日志会脱敏已知凭据格式及含密钥的环境变量值。输入和产物仍可能包含用户数据，分享运行目录前请先检查。
@@ -205,12 +200,6 @@ node evals/scripts/check-browser.mjs evals/runs/RUN/CASE
 ```
 
 该命令只替换浏览器证据；原 `result.json` 仍记录初次评测结果。修改 Skill 或输入后，应创建新运行。
-
-## 图表与表格基础任务的真实 API 记录（2026-10-09）
-
-使用本地配置的 `gpt-5.4-2026-03-05` 接口和 40,000 tokens 累计阈值，两个代表性用例都未完成。`vchart-grouped` 发起 3 次请求，服务商报告共 56,700 tokens，写出了 `spec.js`，但尚未生成 HTML 就停止。`vtable-list` 发起 5 次请求，报告共 49,748 tokens，写出了 `spec.js` 和 `demo.html`，但未给出最终回复，浏览器检查也未通过。阈值在两次请求之间检查，因此最后一次请求可能超过阈值。两次运行报告的缓存输入 tokens 均为 0。详细日志保存在本地被 Git 忽略的 `evals/runs/` 中。
-
-这两次失败不能证明 VChart/VTable 任务无法通过模型 API 完成，但也不能称当前 harness 已可靠支持这些基础用例。评估 Skill 修改时，应结合生成产物、用量和独立复核，而不只看 runner 退出码。
 
 ## 数据叙事调试
 
