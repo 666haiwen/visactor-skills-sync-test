@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parents[2] / "skills/editorial-magazine-html/scripts"
+ROOT = Path(__file__).resolve().parents[2] / "skills/editorial-magazine/scripts"
 
 
 def load(name):

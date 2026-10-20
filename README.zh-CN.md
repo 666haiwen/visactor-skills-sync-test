@@ -11,7 +11,7 @@
 | [vchart-skill](skills/vchart-skill/SKILL.md) | 图表生成、问题诊断、图片还原和 React 集成 |
 | [vtable-skill](skills/vtable-skill/SKILL.md) | 明细表、透视表与透视图、交互和问题诊断 |
 | [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT |
-| [editorial-magazine-html](skills/editorial-magazine-html/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
 | [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 |
 
 每个 Skill 都包含完整指令、本地参考资料、模板和脚本。无需额外安装 VisActor CLI、MCP 服务，也无需为 Skill 单独配置模型 Key 或访问 VisActor 托管 API。模型能力由宿主 Agent 提供。
@@ -26,7 +26,7 @@
 npx skills add VisActor/skills --skill vchart-skill
 npx skills add VisActor/skills --skill vtable-skill
 npx skills add VisActor/skills --skill data-storytelling
-npx skills add VisActor/skills --skill editorial-magazine-html
+npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
 ```
 
@@ -67,7 +67,7 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 npx skills add ./skills/vchart-skill
 npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
-npx skills add ./skills/editorial-magazine-html
+npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
 ```
 

@@ -11,7 +11,7 @@ Chart, table, data storytelling, editorial magazine and biography poster skills 
 | [vchart-skill](skills/vchart-skill/SKILL.md) | Chart generation, diagnosis, image replication and React integration |
 | [vtable-skill](skills/vtable-skill/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis |
 | [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT |
-| [editorial-magazine-html](skills/editorial-magazine-html/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
 | [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
 
 Each skill includes its instructions, local references, templates and scripts. No separate VisActor CLI, MCP server, model key or hosted VisActor API is required. The host agent supplies the model.
@@ -26,7 +26,7 @@ Run these commands in the project where you want to use the Skills:
 npx skills add VisActor/skills --skill vchart-skill
 npx skills add VisActor/skills --skill vtable-skill
 npx skills add VisActor/skills --skill data-storytelling
-npx skills add VisActor/skills --skill editorial-magazine-html
+npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
 ```
 
@@ -67,7 +67,7 @@ From the root of your local repository, install the working copy of a Skill:
 npx skills add ./skills/vchart-skill
 npx skills add ./skills/vtable-skill
 npx skills add ./skills/data-storytelling
-npx skills add ./skills/editorial-magazine-html
+npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
 ```
 

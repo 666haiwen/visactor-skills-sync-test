@@ -44,7 +44,7 @@ def test_copied_skill_generates_without_source_checkout(tmp_path, skill):
 
 def test_copied_editorial_skill_selects_theme_without_source_checkout(tmp_path):
     installed = tmp_path / "editorial skill"
-    shutil.copytree(ROOT / "skills/editorial-magazine-html", installed)
+    shutil.copytree(ROOT / "skills/editorial-magazine", installed)
     command = [sys.executable, str(installed / "scripts/choose_theme.py"), "--seed", "42"]
     first = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, check=True)
     second = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, check=True)
