@@ -8,8 +8,8 @@ Use fixed inputs to check Skill scripts, templates and generated pages. These te
 
 | Skill | Case | Checks |
 | --- | --- | --- |
-| data-storytelling | [story-html](data-storytelling/story-html) | Assemble an HTML story and render its chart |
-| data-storytelling | [story-ppt](data-storytelling/story-ppt) | Assemble a Web-PPT, render its chart and navigate forward and back |
+| chart-storytelling | [story-html](chart-storytelling/story-html) | Assemble an HTML story and render its chart |
+| chart-storytelling | [story-ppt](chart-storytelling/story-ppt) | Assemble a Web-PPT, render its chart and navigate forward and back |
 
 Both cases check for a nonblank chart canvas, page/resource errors and successful local asset loading. PPT navigation checks the target slide's position and visibility. Smoke uses reduced motion and does not assess animation or narrative quality. Screenshots are diagnostic evidence, not pixel-comparison targets.
 
@@ -23,7 +23,7 @@ npm ci --prefix tests/browser --ignore-scripts
 node tests/browser/node_modules/playwright/cli.js install chromium
 
 uv run python tests/browser/scripts/smoke.py
-uv run python tests/browser/scripts/smoke.py --skill data-storytelling
+uv run python tests/browser/scripts/smoke.py --skill chart-storytelling
 uv run python tests/browser/scripts/smoke.py --case story-ppt
 ```
 

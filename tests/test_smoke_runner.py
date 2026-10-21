@@ -22,21 +22,21 @@ def smoke(monkeypatch):
 
 @pytest.fixture
 def catalog(tmp_path):
-    directory = tmp_path / "data-storytelling/custom-story"
-    shutil.copytree(ROOT / "tests/browser/cases/data-storytelling/story-html", directory)
+    directory = tmp_path / "chart-storytelling/custom-story"
+    shutil.copytree(ROOT / "tests/browser/cases/chart-storytelling/story-html", directory)
     return tmp_path, directory
 
 
 def test_new_case_directory_is_discovered_without_a_runner_allowlist(smoke, catalog):
     root, _ = catalog
     assert [(case["skill"], case["id"]) for case in smoke.load_cases(root)] == [
-        ("data-storytelling", "custom-story")
+        ("chart-storytelling", "custom-story")
     ]
 
 
 def test_explicit_case_selection_stays_within_selected_skill(smoke):
     with pytest.raises(ValueError, match="Unknown smoke cases"):
-        smoke.select_cases(smoke.load_cases(), "data-storytelling", ["removed-chart"])
+        smoke.select_cases(smoke.load_cases(), "chart-storytelling", ["removed-chart"])
 
 
 @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ def test_preparation_copies_owned_inputs_and_keeps_acceptance_outside_skill_work
     assert (workspace / "inputs/plan.md").read_bytes() == (
         directory / "inputs/plan.md"
     ).read_bytes()
-    assert (workspace / ".agents/skills/data-storytelling/SKILL.md").is_file()
+    assert (workspace / ".agents/skills/chart-storytelling/SKILL.md").is_file()
     assert not list(workspace.rglob("expectations.json"))
     assert json.loads((destination / "expectations.json").read_text()) == case["expectations"]
 
@@ -133,7 +133,7 @@ def test_list_needs_no_browser_or_credentials_and_creates_no_evidence(tmp_path):
             sys.executable,
             str(ROOT / "tests/browser/scripts/smoke.py"),
             "--skill",
-            "data-storytelling",
+            "chart-storytelling",
             "--list",
             "--output-dir",
             str(output),

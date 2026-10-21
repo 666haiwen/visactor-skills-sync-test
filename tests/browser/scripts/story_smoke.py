@@ -14,7 +14,7 @@ def build_story(workspace: Path, config: dict) -> list[dict]:
     for file in (workspace / "inputs").iterdir():
         shutil.copy2(file, runtime / file.name)
     (runtime / "generated-assets").mkdir()
-    skill = workspace / ".agents/skills/data-storytelling"
+    skill = workspace / ".agents/skills/chart-storytelling"
     commands = [
         ("validate_story_plan.py", ["--plan-file", "outputs/runtime/plan.md"]),
         (

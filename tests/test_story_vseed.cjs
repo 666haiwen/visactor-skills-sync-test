@@ -16,7 +16,7 @@ runtime.registerAll();
 
 // Exercise the private merge helper in a fresh realm for each test so a
 // regression cannot pollute this test runner or another test's prototypes.
-const storySource = fs.readFileSync(path.resolve(__dirname, '../skills/data-storytelling/scripts/vseed-render.js'), 'utf8');
+const storySource = fs.readFileSync(path.resolve(__dirname, '../skills/chart-storytelling/scripts/vseed-render.js'), 'utf8');
 const helpersStart = storySource.indexOf('  function isPlainObject(value)');
 const helpersEnd = storySource.indexOf('  function getThemeChartConfig(', helpersStart);
 assert.ok(helpersStart >= 0 && helpersEnd > helpersStart, 'Story theme helpers must be available');
@@ -92,7 +92,7 @@ from local_chart_specs import assemble_local_specs
 s,d=json.load(sys.stdin)
 request={"chartId":"chart","datasetRef":"data","annotations":[],"contract":{"chart_type":s["chartType"],"dimensions":s["dimensions"],"measures":s["measures"]}}
 print(json.dumps(assemble_local_specs([request],{"data":d},{"chart":s})["chart"]["spec"]))
-`, path.join(root, 'skills/data-storytelling/scripts')], { cwd: root, input: JSON.stringify([spec, dataset]), encoding: 'utf8' }));
+`, path.join(root, 'skills/chart-storytelling/scripts')], { cwd: root, input: JSON.stringify([spec, dataset]), encoding: 'utf8' }));
     const builder = runtime.Builder.from(assembled);
     await builder.prepare();
     const chart = builder.build();

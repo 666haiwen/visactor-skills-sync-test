@@ -10,7 +10,7 @@
 
 | Skill | 能力 |
 | --- | --- |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | 数据分析与叙事设计、滚动故事、HTML 报告和 Web-PPT |
+| [chart-storytelling](skills/chart-storytelling/SKILL.md) | 分析报告、业务简报与数据专题，结合图表滚动叙事与标注，输出 HTML 数据故事或 Web-PPT |
 | [editorial-magazine](skills/editorial-magazine/SKILL.md) | 杂志图文：新闻、生平、穿搭、旅行、时序故事与科普，导出 HTML / PNG |
 | [life-chronicle](skills/life-chronicle/SKILL.md) | 人物生平海报：照片墙、中心网格、照片环与可编辑时间线 |
 
@@ -32,7 +32,7 @@
 在你准备使用 Skills 的项目目录中执行：
 
 ```bash
-npx skills add VisActor/skills --skill data-storytelling
+npx skills add VisActor/skills --skill chart-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
 ```
@@ -44,6 +44,8 @@ npx skills add VisActor/VChart --skill vchart-development-assistant
 npx skills add VisActor/VTable --skill vtable-development-assistant
 ```
 
+如果之前安装了 `data-storytelling`，请移除该安装副本，再安装 `chart-storytelling`。
+
 按照安装器提示选择 Codex 或 Claude Code。每个 Skill 都可以按需单独安装。更多安装选项见 [Skills CLI 说明](https://github.com/vercel-labs/skills#usage)。
 
 运行要求：
@@ -53,7 +55,7 @@ npx skills add VisActor/VTable --skill vtable-development-assistant
 
 | Skill | 运行依赖 |
 | --- | --- |
-| data-storytelling | Python 3.10+（标准库）和 Node.js（校验 JavaScript）；从 unpkg 加载固定版本的 VSeed、VChart、VTable 与 GSAP |
+| chart-storytelling | Python 3.10+（标准库）和 Node.js（校验 JavaScript）；从 unpkg 加载固定版本的 VSeed、VChart、VTable 与 GSAP |
 | editorial-magazine | Python 3.10+、其 [requirements.txt](skills/editorial-magazine/requirements.txt) 中的依赖，以及用于导出 PNG 的 Chromium/Chrome；字体从 CDN 加载，支持系统回退 |
 | life-chronicle | Python 3.10+、其 [requirements.txt](skills/life-chronicle/requirements.txt) 中的依赖，以及用于导出 PNG 的 Chromium/Chrome；固定版本的 VInfo 与字体 CDN，详见[环境说明](skills/life-chronicle/references/environment.md) |
 
@@ -63,11 +65,11 @@ npx skills add VisActor/VTable --skill vtable-development-assistant
 
 安装后，在 Agent 中指定所需 Skill，并提供你的数据。例如：
 
-- “使用 data-storytelling，向增长负责人解释这个 CSV 的留存变化，生成可分享的 HTML 故事。”
+- “使用 chart-storytelling，向增长负责人解释这个 CSV 的留存变化，生成可分享的 HTML 故事。”
 - “使用 editorial-magazine，把这篇文章及其来源整理成可编辑 HTML 和 PNG 杂志组图。”
 - “使用 life-chronicle，根据这些有来源的事件和照片制作人物志海报，时间线文字需要可编辑。”
 
-data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装；不依赖托管图表生成服务。图片生成使用宿主能力，没有生图工具时采用计划声明的 fallback。Web-PPT 是浏览器演示稿，不是 `.pptx`。
+chart-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装；不依赖托管图表生成服务。图片生成使用宿主能力，没有生图工具时采用计划声明的 fallback。Web-PPT 是浏览器演示稿，不是 `.pptx`。
 
 生成的 JavaScript/HTML 是可执行代码。请在本地预览自己生成或已审查的产物；测试浏览器并不是用于执行任意不可信提交的安全沙箱。
 
@@ -100,7 +102,7 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 在本地仓库根目录执行，安装当前工作副本中的 Skill：
 
 ```bash
-npx skills add ./skills/data-storytelling
+npx skills add ./skills/chart-storytelling
 npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
 ```
@@ -117,13 +119,13 @@ uv run pytest tests -q
 uv run ruff check skills tests
 ```
 
-固定浏览器用例按 Skill 集中在 [tests/browser/cases/](tests/browser/cases/README.zh-CN.md)，每个用例的配置、输入和验收文件放在一起。按指南准备浏览器后，用 `uv run python tests/browser/scripts/smoke.py` 执行全部用例，也可通过 `--skill data-storytelling` 或 `--case story-ppt` 单独选择。这些检查不调用模型。
+固定浏览器用例按 Skill 集中在 [tests/browser/cases/](tests/browser/cases/README.zh-CN.md)，每个用例的配置、输入和验收文件放在一起。按指南准备浏览器后，用 `uv run python tests/browser/scripts/smoke.py` 执行全部用例，也可通过 `--skill chart-storytelling` 或 `--case story-ppt` 单独选择。这些检查不调用模型。
 
 ### Skill 任务调试
 
 使用 Codex、Claude Code 或其他兼容的成熟 Agent 执行[固定任务](cases/README.md)，也可以提供自己的提示词和输入。按[本地调试指南](docs/debugging.md)建立已忽略的 `.cache/skill-dev/<skill-name>/<run-name>/` 工作目录，保留产物、截图及可导出的日志。仓库不提供模型 API harness 或统一 Agent 执行器。
 
-固定任务目前覆盖 data-storytelling，浏览器 smoke 覆盖其 HTML 故事和 Web-PPT。editorial-magazine 和 life-chronicle 已有脚本回归，尚无固定任务或浏览器 smoke。任务完成后检查数据准确性、要求和实际交互，允许不同的正确视觉表达。Agent 任务不在 CI 中运行。
+固定任务目前覆盖 chart-storytelling，浏览器 smoke 覆盖其 HTML 故事和 Web-PPT。editorial-magazine 和 life-chronicle 已有脚本回归，尚无固定任务或浏览器 smoke。任务完成后检查数据准确性、要求和实际交互，允许不同的正确视觉表达。Agent 任务不在 CI 中运行。
 
 ## 版本管理
 
