@@ -1,0 +1,2 @@
+# Optional local CPU segmentation; not needed for MediaKit/pre-cut transparent PNGs.
+rembg[cpu]==2.0.69

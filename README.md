@@ -1,313 +1,142 @@
-<div align="center">
-   <a href="https://github.com/VisActor#gh-light-mode-only" target="_blank">
-    <img alt="VisActor Logo" width="200" src="https://github.com/VisActor/.github/blob/main/profile/logo_500_200_light.svg"/>
-  </a>
-  <a href="https://github.com/VisActor#gh-dark-mode-only" target="_blank">
-    <img alt="VisActor Logo" width="200" src="https://github.com/VisActor/.github/blob/main/profile/logo_500_200_dark.svg"/>
-  </a>
-</div>
+# VisActor Skills
 
-<div align="center">
-  <h1>VMind</h1>
-</div>
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-<div align="center">
+Agent skills for the VisActor visualization ecosystem. Create data stories, editorial image series and biography posters with independently installable Skills. VChart and VTable Skills are maintained in their respective library repositories.
 
-Not just automatic, but also fantastic.Open-source solution for intelligent visualization.
+## Skills
 
-<p align="center">
-  <a href="https://www.visactor.io/vmind">Introduction</a> •
-  <a href="https://www.visactor.io/vmind/example">Demo</a> •
-  <a href="https://www.visactor.io/vmind/guide/Intro_to_VMind">Tutorial</a> •
-  <a href="https://www.visactor.io/vmind/api/VMind_Instance">API</a>•
-  <a href="https://www.visactor.io/vmind/openapi">OpenApi</a>
-</p>
+### Maintained in this repository
 
-![](https://github.com/visactor/vmind/actions/workflows/bug-server.yml/badge.svg)
-![](https://github.com/visactor/vmind/actions/workflows/unit-test.yml/badge.svg)
-[![npm Version](https://img.shields.io/npm/v/@visactor/vmind.svg)](https://www.npmjs.com/package/@visactor/vmind)
-[![npm Download](https://img.shields.io/npm/dm/@visactor/vmind.svg)](https://www.npmjs.com/package/@visactor/vmind)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/VisActor/VMind/blob/main/CONTRIBUTING.md#your-first-pull-request)
+| Skill | Tasks |
+| --- | --- |
+| [chart-storytelling](skills/chart-storytelling/SKILL.md) | Analysis reports, business briefings and data features, with chart scrollytelling and annotations, delivered as HTML stories or Web-PPT |
+| [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
+| [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
 
-![](https://img.shields.io/badge/language-TypeScript-red.svg) [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/visactor/vmind/blob/main/LICENSE)
+### Related VisActor Skills
 
-</div>
+Chart and table Skills are maintained in their library repositories. Install them directly from the source:
 
+| Skill | Tasks | Repository |
+| --- | --- | --- |
+| [VChart Skill](https://github.com/VisActor/VChart/blob/develop/skills/vchart-development-assistant/SKILL.md) | Chart generation, diagnosis, image replication and React integration | [VisActor/VChart](https://github.com/VisActor/VChart) |
+| [VTable Skill](https://github.com/VisActor/VTable/blob/develop/skills/vtable-development-assistant/SKILL.md) | List tables, pivot tables/charts, interactions and diagnosis | [VisActor/VTable](https://github.com/VisActor/VTable) |
 
+Each skill includes its instructions, local references, templates and scripts. No separate VisActor CLI, MCP server, model key or hosted VisActor API is required. The host agent supplies the model.
 
-<div align="center">
+**Recommended: use the Skills directly in Codex or Claude Code.** Your agent provides model access and tool execution. Other compatible agents may also use these Skills, but do not have dedicated setup instructions here.
 
-English | [简体中文](readme-zh.md) | [日本語](README-ja.md)
+## Install
 
-</div>
-
-## Introduction
-
-`@visactor/vmind` is an intelligent chart component based on LLM provided by [VisActor](https://www.visactor.io/), including dialog-based chart generation and editing capabilities. It provides a natural language interaction interface, allowing you to easily create chart narrative works with `@visactor/VMind` with just one sentence, and edit them through continuous dialogue, greatly improving your efficiency in creating data visualization works.
-
-The main features of `@visactor/vmind` include:
-
-- **Easy to use**: Just provide the data you want to display and a sentence describing the information you want to display, and `@visactor/vmind` will automatically generate the chart for you. Based on the existing chart, describe the modifications you want to make to the chart in one sentence, and `@visactor/VMind` will help you achieve the desired effect.
-- **Strong scalability**: The components of `@visactor/VMind` can be easily extended and customized, and new functions and features can be added as needed. By default, the OpenAI GPT model is used, and you can easily replace it with any LLM service.
-- **Easy narrative**: Based on the powerful chart narrative ability of `@visactor/vchart`, `@visactor/VMind` supports the generation of various types of charts, including line charts, bar charts, pie charts, etc., and can also generate dynamic bar charts and other dynamic charts, making it easy for you to narrate data. More chart types are being added. You can also use the dialog-based editing function to easily modify chart styles and animation effects, making it easy for you to create narratives.
-- **One-click export**: `@visactor/VMind` comes with a chart export module, and you can export the created chart narrative as a video or GIF for display.
-
-## Development Guide
-
-### Docs Page
-
-Enter the VMind repository and execute:
+Run these commands in the project where you want to use the Skills:
 
 ```bash
-# Install dependencies
-$ rush update
-# Start the demo page
-$ rush docs
+npx skills add VisActor/skills --skill chart-storytelling
+npx skills add VisActor/skills --skill editorial-magazine
+npx skills add VisActor/skills --skill life-chronicle
 ```
 
-
-### Start the Development Page
-
-Enter the VMind repository and execute:
+For chart and table tasks, install the related Skills from their owning repositories:
 
 ```bash
-# Install dependencies
-$ rush update
-# Start the VMind development page
-$ rush vmind
+npx skills add VisActor/VChart --skill vchart-development-assistant
+npx skills add VisActor/VTable --skill vtable-development-assistant
 ```
 
-You can start the vmind development page.
-You need to set your LLM service URL and API key to use it normally. You can modify the headers when calling the LLM in packages/vmind/\_\_tests\_\_/browser/src/pages/DataInput.tsx.
-You can create a new .env.local file in the packages/vmind folder and write in it:
+If you previously installed `data-storytelling`, remove that installed copy and install `chart-storytelling` to use the renamed Skill.
+
+Follow the installer's prompts to select Codex or Claude Code. You can install each Skill independently. More installation options are documented in the [Skills CLI reference](https://github.com/vercel-labs/skills#usage).
+
+Requirements:
+
+- Node.js and npm for installation; a host agent with filesystem/shell tools and its own model access.
+- A browser and network access to preview generated HTML and load external assets.
+
+| Skill | Runtime requirements |
+| --- | --- |
+| chart-storytelling | Python 3.10+ (standard library) and Node.js for JavaScript checks; pinned VSeed, VChart, VTable and GSAP load from unpkg |
+| editorial-magazine | Python 3.10+, dependencies in its [requirements.txt](skills/editorial-magazine/requirements.txt), and Chromium/Chrome for PNG export; font CDN with system fallbacks |
+| life-chronicle | Python 3.10+, dependencies in its [requirements.txt](skills/life-chronicle/requirements.txt), and Chromium/Chrome for PNG export; pinned VInfo and font CDN, see [environment setup](skills/life-chronicle/references/environment.md) |
+
+Image search, generation and cutout capabilities come from the host; follow the selected Skill's asset requirements. Magazine templates contain placeholders to replace before delivery. See the owning repositories for VChart/VTable Skill requirements.
+
+## Use
+
+After installation, ask your agent to use the selected Skill with your data. For example:
+
+- “Use chart-storytelling to explain retention changes in this CSV to our growth lead as a shareable HTML story.”
+- “Use editorial-magazine to turn this article and its sources into an editable HTML and PNG image series.”
+- “Use life-chronicle to create a biography poster from these sourced events and photos, with editable timeline text.”
+
+Data-storytelling uses the current agent to author VSeed configurations and local scripts to assemble the output; it needs no hosted chart generation service. Images use host capabilities or the declared fallback. Web-PPT is a browser presentation, not a `.pptx` file.
+
+Generated JavaScript/HTML is executable code. Preview your own or reviewed artifacts locally; the test browser is not a sandbox for arbitrary untrusted submissions.
+
+## Examples
+
+The [example gallery](examples/README.md) includes a CO₂ scrolling story and a Las Vegas Web-PPT, with prompts, available inputs, final artifacts and previews.
+
+## Development and maintenance
+
+This section is for contributors editing Skills or running local tests. The default branch, `main`, contains the user-facing stable version. Day-to-day development and contribution PRs use `develop`; reviewed updates are published through a `develop` → `main` PR. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `skills/<skill-name>/` | Independently installable runtime: `SKILL.md`, references, templates/assets and scripts |
+| `tests/<skill_name>/` | Skill-specific deterministic Python regressions; hyphens become underscores for Python imports |
+| `tests/test_*` | Shared tooling/installation checks and Node.js browser/Story integration tests |
+| `examples/<skill-name>/<case-name>/` | Curated examples with prompts, inputs, results and previews |
+| `cases/<skill-name>/<case-name>/` | Fixed Agent prompts, inputs and acceptance guidance |
+| `tests/browser/cases/<skill-name>/<case-id>/` | Fixed browser cases: configuration, inputs and expectations |
+| `tests/browser/scripts/` | Browser smoke builds and checks; dependencies are pinned in `tests/browser/` |
+| `.cache/skill-dev/<skill-name>/<run-name>/` | Ignored local workspaces, outputs, screenshots and logs |
+| `docs/` | Contributor references; `docs/migration/` contains historical migration records |
+
+Keep each runtime Skill self-contained. It must not depend on `tests/`, `cases/`, `examples/` or another Skill's local directory. See [contribution conventions](CONTRIBUTING.md#adding-or-updating-a-skill) for adding Skills and selecting checks.
+
+### Install from a local checkout
+
+From the root of your local repository, install the working copy of a Skill:
 
 ```bash
-VITE_GPT_URL="Your service url of gpt model"
-VITE_GPT_KEY="Your api-key of gpt model"
-VITE_DEEPSEEK_URL="https://api.deepseek.com/chat/completions"
-VITE_DEEPSEEK_KEY="Your api-key of deepseek model"
-VITE_CUSTOM_URL="Your service url of custom model"
-VITE_CUSTOM_KEY="Your api-key of custom model"
-VITE_CUSTOM_MODEL="Your Custom Model Name"
-VITE_PROXY_CONFIG="Your Vite proxy config for forwarding requests. Must be in JSON string format and is optional. Example: {"proxy": {"/v1": {"target": "https://api.openai.com/","changeOrigin": true},"/openapi": {"target": "https://api.openai.com/","changeOrigin": true}}}"
+npx skills add ./skills/chart-storytelling
+npx skills add ./skills/editorial-magazine
+npx skills add ./skills/life-chronicle
 ```
 
-These configurations will be automatically loaded when starting the development environment.
+Alternatively, copy the complete Skill directory into your agent's skill directory, including its references, templates and scripts. Do not copy only `SKILL.md`. See the [local debugging guide](docs/debugging.md) for Codex and Claude Code workspace setup. Refresh the installed copy after changing a Skill before retesting.
 
-## Instructions for use
+### Regression tests
 
-### 📦 Installation
+The Python maintenance environment requires Python 3.12+ and [uv](https://docs.astral.sh/uv/):
 
 ```bash
-# npm
-$ npm install @visactor/vmind
-
-# yarn
-$ yarn add @visactor/vmind
+uv sync --locked
+uv run pytest tests -q
+uv run ruff check skills tests
 ```
 
-### 📊 Usage Example
+Fixed browser cases live under [tests/browser/cases/](tests/browser/cases/README.md), with configuration, inputs and acceptance criteria together. After the browser setup in that guide, run `uv run python tests/browser/scripts/smoke.py`, or select `--skill chart-storytelling` / `--case story-ppt`. These checks do not call a model.
 
-#### Intelligent Chart Generation
+### Skill task debugging
 
-First, we need to install VMind in the project:
+Use Codex, Claude Code or another compatible mature agent to run a [fixed task](cases/README.md) or your own prompt and inputs. Follow [local debugging](docs/debugging.md) to prepare an ignored `.cache/skill-dev/<skill-name>/<run-name>/` workspace and retain artifacts, screenshots and available logs. This repository does not provide a model API harness or unified agent runner.
 
-```bash
-# Install with npm
+Fixed tasks currently cover chart-storytelling; browser smoke covers its HTML stories and Web-PPT. Editorial-magazine and life-chronicle have script regressions, but no fixed tasks or browser smoke yet. Review generated results for data accuracy, task requirements and interactions; different correct visual designs are acceptable. Agent tasks are not run in CI.
 
-npm install @visactor/vmind
+## Versioning
 
-# Install with yarn
+Skills maintained here are versioned together at repository level. Each formal Skills release is identified by a Git tag covering the Skill instructions, references, templates and scripts. VChart and VTable Skill versions are managed by their respective repositories.
 
-yarn add @visactor/vmind
-```
+Ordinary edits are identified by Git commits; each Skill change does not require a release tag.
 
-Next, import VMind at the top of the JavaScript file
+Use a release tag or commit SHA to identify the version when reporting an issue or reproducing a result; branch contents can change. Dependency versions such as VTable `1.26.8` identify the underlying library, not the Skill release. Historical VMind SDK tags remain unchanged and belong to the earlier SDK.
 
-```typescript
-import VMind from '@visactor/vmind';
-```
+## Earlier VMind versions
 
-VMind currently supports GPT, deepseek, doubao and any other models with API Keys. Users can specify the model type to be called when initializing the VMind object, and pass in the URL of the LLM service. Next, we initialize a VMind instance and pass in the model type and model url:
+The previous VMind SDK is no longer maintained. Its code and documentation remain in [historical releases](https://github.com/VisActor/skills/releases).
 
-```typescript
-import { Model } from '@visactor/vmind';
-
-const vmind = new VMind({
-  url: LLM_SERVICE_URL, // URL of the LLM service
-  model: Model.GPT4o, // Model to use
-  headers: {
-    'api-key': LLM_API_KEY
-  } //headers will be used directly as the request header in the LLM request. You can put the model api key in the header
-});
-```
-
-Here is a list of supported models:
-
-```typescript
-//models that VMind support
-export enum Model {
-  GPT3_5 = 'gpt-3.5-turbo',
-  GPT3_5_1106 = 'gpt-3.5-turbo-1106',
-  GPT4 = 'gpt-4',
-  GPT_4_0613 = 'gpt-4-0613',
-  GPT_4o = 'gpt-4o-2024-08-06',
-  DOUBAO_LITE = 'doubao-lite-32K',
-  DOUBAO_PRO = 'doubao-pro-128k',
-  CHART_ADVISOR = 'chart-advisor',
-  DEEPSEEK_V3 = 'deepseek-chat',
-  DEEPSEEK_R1 = 'deepseek-reasoner'
-}
-```
-And also you can use other model you like:
-```typescript
-import { Model } from '@visactor/vmind';
-
-const vmind = new VMind({
-  url: LLM_SERVICE_URL,
-  model: LLM_MODEL_NAME, // Model You Choose
-  headers: {
-    'api-key': LLM_API_KEY
-  }
-});
-```
-
-VMind supports datasets in both CSV and JSON formats.
-
-To use CSV data in subsequent processes, you need to call the data processing method to extract field information and convert it into a structured dataset. VMind provides a rule-based method `parseCSVData` to obtain field information:
-
-```typescript
-// Pass in the CSV string to obtain the fieldInfo and the JSON-structured dataset
-const { fieldInfo, dataset } = vmind.parseCSVData(csv);
-```
-
-We can also call the `getFieldInfo` method to obtain the fieldInfo by passing in a JSON-formatted dataset:
-
-```typescript
-// Pass in a JSON-formatted dataset to obtain the fieldInfo
-const dataset=[
-{
-"Product name": "Coke",
-"region": "south",
-"Sales": 2350
-},
-{
-"Product name": "Coke",
-"region": "east",
-"Sales": 1027
-},
-{
-"Product name": "Coke",
-"region": "west",
-"Sales": 1027
-},
-{
-"Product name": "Coke",
-"region": "north",
-"Sales": 1027
-}
-]
-const fieldInfo = vmind.getFieldInfo(dataset);
-```
-
-We want to show "the changes in sales rankings of various car brands". Call the generateChart method and pass the data and display content description directly to VMind:
-
-```typescript
-const userPrompt = 'show me the changes in sales rankings of various car brand';
-//Call the chart generation interface to get spec and chart animation duration
-const { spec, time } = await vmind.generateChart(userPrompt, fieldInfo, dataset);
-```
-
-In this way, we get the VChart spec of the corresponding dynamic chart. We can render the chart based on this spec:
-
-```typescript
-import VChart from '@visactor/vchart';
-
-<body>
-<!-- Prepare a DOM with size (width and height) for vchart, of course you can also specify it in the spec configuration -->
-<div id="chart" style="width: 600px;height:400px;"></div>
-</body>
-
-// Create a vchart instance
-const vchart = new VChart(spec, { dom: 'chart' });
-// Draw
-vchart.renderAsync();
-```
-
-Thanks to the capabilities of the large language model, users can describe more requirements in natural language and "customize" dishes.
-Users can specify different theme styles (currently only gpt chart generation supports this feature). For example, users can specify to generate a tech-style chart:
-
-```typescript
-//userPrompt can be in both Chinese and English
-//Specify to generate a tech-style chart
-const userPrompt = 'show me the changes in sales rankings of various car brand,tech style';
-const { spec, time } = await vmind.generateChart(userPrompt, fieldInfo, dataset);
-```
-
-You can also specify the chart type, field mapping, etc. supported by VMind. For example:
-
-```typescript
-//Specify to generate a line chart, with car manufacturers as the x-axis
-const userPrompt =
-  'show me the changes in sales rankings of various car brands,tech style.Using a line chart, Manufacturer makes the x-axis';
-const { spec, time } = await vmind.generateChart(userPrompt, fieldInfo, dataset);
-```
-
-#### Data Aggregation
-When using the chart library to draw bar charts, line charts, etc., if the data is not aggregated, it will affect the visualization effect. At the same time, because no filtering and sorting of fields has been done, some visualization intentions cannot be met, for example: show me the top 10 departments with the most cost, show me the sales of various products in the north, etc.
-
-VMind supports intelligent data aggregation since version 1.2.2. This function uses the data input by the user as a data table, uses a LLM to generate SQL queries according to the user's command, queries data from the data table, and uses GROUP BY and SQL aggregation methods to group, aggregate, sort, and filter data. Supported SQL statements include: SELECT, GROUP BY, WHERE, HAVING, ORDER BY, LIMIT. Supported aggregation methods are: MAX(), MIN(), SUM(), COUNT(), AVG(). Complex SQL operations such as subqueries, JOIN, and conditional statements are not supported.
-
-
-Use the `dataQuery` function of the VMind object to aggregate data. This method has three parameters:
-- userInput: user input. You can use the same input as generateChart
-- fieldInfo: Dataset field information. The same as generateChart, it can be obtained by parseCSVData, or built by the user.
-- dataset: Dataset. The same as generateChart, it can be obtained by parseCSVData, or built by the user.
-
-```typescript
-const { fieldInfo, dataset } = await vmind?.dataQuery(userInput, fieldInfo, dataset);
-```
-
-
-The fieldInfo and dataset returned by this method are the field information and dataset after data aggregation, which can be used for chart generation.
-By default, the `generateChart` function will perform a data aggregation using the same user input before generating the chart. You can disable data aggregation by passing in the fourth parameter:
-```typescript
-const userInput = 'show me the changes in sales rankings of various car brand';
-const { spec, time } = await vmind.generateChart(userInput, fieldInfo, dataset, false); //pass false as the forth parameter to disable data aggregation before generating a chart.
-```
-
-#### Data Insight
-[Tutorial](https://visactor.io/vmind/guide/Basic_Tutorial/Chart_Insight)
-
-#### Data Extraction: Text to Chart
-[Tutorial](https://visactor.io/vmind/guide/Basic_Tutorial/Data_Extraction)
-
-#### Dialog-based editing
-
-Under development, stay tuned
-
-### Effect display
-
-#### Dynamic bar chart
-
-![Alt text](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/VChart-Video-2.gif)
-
-#### Bar chart
-
-![Alt text](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/VChart-Video-1.gif)
-
-#### Pie chart
-
-![Alt text](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/VChart-Video-3.gif)
-
-# Contribution
-
-If you would like to contribute, please read the [Code of Conduct ](./CODE_OF_CONDUCT.md) and [ Guide](./CONTRIBUTING.md) first。
-
-Small streams converge to make great rivers and seas!
-
-<a href="https://github.com/visactor/vmind/graphs/contributors"><img src="https://contrib.rocks/image?repo=visactor/vmind" /></a>
-
-# License
-
-[MIT License](./LICENSE)
+[MIT license](LICENSE)

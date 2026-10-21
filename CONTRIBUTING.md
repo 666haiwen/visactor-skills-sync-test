@@ -1,182 +1,71 @@
-# VMind Open Source Code Contribution Guide
+# Contributing
 
-Firstly, thumbs up👍🏻 for choosing to join the rank of open source contribution. Additionally, we greatly appreciate you choosing to participate in the VisActor community and contributing to this open source project.
+Changes to Skills should protect a concrete user task or failure mode. Keep runtime instructions/resources under `skills/`, deterministic regressions under `tests/`, fixed Agent tasks under `cases/`, and curated results under `examples/`.
 
-## VMind Contribution Guide
+## Start here
 
-The VisActor team usually develops and maintains issues on Github. Please open the [Github website](https://github.com/), click the `Sign up` button in the upper right corner, register an account of your own, and start the first step of your open source journey.
+Use `main` as the default, user-facing stable branch and `develop` for day-to-day maintenance. Publish reviewed updates through a `develop` → `main` pull request. Create contribution branches from the latest `origin/develop` and target pull requests to `develop`.
 
-If for some reason you can't open the Github site, you can still work on the project through [Gitee](https://gitee.com/VisActor/VChart).
+VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/VisActor/VChart/tree/develop/skills/vchart-development-assistant) and [VisActor/VTable](https://github.com/VisActor/VTable/tree/develop/skills/vtable-development-assistant). Make changes to those Skills in their owning repositories.
 
-In the [VMind repository](https://github.com/VisActor/VMind), we have a [guide](https://github.com/VisActor/VMind/blob/develop/CONTRIBUTING.zh-CN.md) for all open source contributors that introduces version management, branch management, etc. **Please take a few minutes to read and understand it**.
+1. Reproduce a task with a mature agent such as Codex or Claude Code. Follow [local debugging](docs/debugging.md) to create an ignored `.cache/skill-dev/<skill-name>/<run-name>/` workspace. Use your own prompt/assets or a [fixed task](cases/README.md).
+2. Edit the Skill source, refresh the installed copy and retest. Inspect generated files and required interactions. Keep the prompt, inputs, host/model, available logs and screenshots locally; automated success does not replace semantic or visual review.
+3. Run `uv sync --locked`, then the relevant regressions below. These checks need no model account.
+4. For Python changes, run Ruff on the affected paths. Broaden verification when shared tooling or multiple Skills are affected.
 
-## Your First PullRequest
+### Adding or updating a Skill
 
-### Step0: Install Git
+- Use `skills/<skill-name>/SKILL.md` with a lowercase hyphenated directory matching the frontmatter `name`. Keep required references, assets, templates, scripts and optional dependency declarations in that directory.
+- Skills must work when copied independently. Do not import maintenance files or resources from a sibling Skill. Keep tests, task cases and generated artifacts outside the installed Skill.
+- Put Skill-specific Python regressions in `tests/<skill_name>/`, replacing hyphens with underscores. Shared installation/tooling tests and Node.js integrations live at the test root.
+- Fixed Agent tasks belong in `cases/<skill-name>/<case-name>/`, with prompt, inputs and acceptance guidance together. Follow the [case guide](cases/README.md). Keep reviewer criteria outside the generation workspace; allow different correct outputs.
+- Fixed browser cases belong in `tests/browser/cases/<skill-name>/<case-id>/`. Configuration, inputs and expectations stay together; scripts and locked browser dependencies live under `tests/browser/`.
+- Curated user-facing examples belong in `examples/<skill-name>/<case-name>/`; follow the [example guide](examples/README.md). Review outputs before showcasing them; keep raw execution logs local.
+- Update both root READMEs with the Skill's tasks, install command and requirements. Document actual test coverage; do not create empty catalogs just to mirror every installed Skill.
 
-Git is a version control system used to track and manage changes in code in software development projects. It helps developers record and manage the history of code, making it easy for team collaboration, code version control, merging code, and more. With Git, you can track each version of each file and easily switch between and compare different versions. Git also provides branch management, so you can perform multiple parallel development tasks at the same time.
+### Select checks by scope
 
-- Visit the official Git website: <https://git-scm.com/>
-- Download the latest version of Git installer.
-- Run the downloaded installer and follow the installation wizard's instructions to install.
-- After installation, you can use the `git version` command on the command line to confirm successful installation.
+| Scope | Deterministic regressions | Task/browser coverage |
+| --- | --- | --- |
+| chart-storytelling | `uv run pytest tests/chart_storytelling -q`; `node --test tests/test_story_vseed.cjs` after browser dependency installation | [Fixed tasks](cases/README.md); HTML and Web-PPT smoke |
+| editorial-magazine | `uv run pytest tests/editorial_magazine -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
+| life-chronicle | `uv run pytest tests/life_chronicle -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
+| Packaging | `uv run pytest tests/test_portable_install.py -q` | Copied Skill execution without the source checkout |
+| Shared test tooling | Relevant root tests, or `uv run pytest tests -q` for changes across modules | [Browser smoke guide](tests/browser/cases/README.md) |
 
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/git_version.png)
+For example, lint `skills/life-chronicle tests/life_chronicle` when changing its Python helpers. Use `uv run ruff check skills tests` for changes spanning Skills or shared tooling. CI runs the full deterministic suite.
 
-When using Git, you need to set your username and email address, as these will be used in every Git commit. Open the command line and input the following commands to set your Git username:
+## Continuous integration
+
+`Skills CI` runs on pull requests and pushes to `main`/`develop`, with two jobs:
+
+- **Lint and regressions**: install locked Python dependencies, run Ruff and deterministic tests, including copied Skill execution and fixed-input integrity checks.
+- **Browser smoke (no model)**: use copied Skills to generate a fixed HTML story and Web-PPT, then check chart rendering, slide navigation and browser errors. Pinned npm packages serve CDN requests locally; unexpected external requests fail. Save JSON reports, logs, generated HTML and screenshots for seven days.
+
+Neither job calls a model or needs model credentials. Browser smoke checks script/template integration. Execute fixed Agent tasks locally and review their results separately.
+
+To run browser checks locally:
 
 ```bash
-git config --global user.name "your_username"
-git config --global user.email "your_email@example.com"
+npm ci --prefix tests/browser --ignore-scripts
+node tests/browser/node_modules/playwright/cli.js install chromium
+node --test tests/test_browser_assets.mjs tests/test_browser_checks.mjs tests/test_story_vseed.cjs
+uv run python tests/browser/scripts/smoke.py
+# Select a Skill or a single fixed browser case
+uv run python tests/browser/scripts/smoke.py --skill chart-storytelling
+uv run python tests/browser/scripts/smoke.py --case story-ppt
 ```
 
-Please replace "your_username" and "your_email@example.com" with the username and email you want to use in Git.
+On Linux, use `install --with-deps chromium` when system libraries are missing. Each smoke run creates a new evidence directory under `.cache/`; `--output-dir PATH` selects an explicit directory that must not exist yet.
 
-### Step1: Fork the Project
+## Before committing
 
-- First, you need to fork this project. Go to the [VMind project page](https://github.com/VisActor/VMind), click the Fork button in the upper right corner.
+Enable repository hooks:
 
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/fork_vmind.png)
-
-- Your github account should now have a project named xxxx(your github username)/vmind.
-- Use the following command on your local computer: you should get a VMind folder.
-
-```
-// ssh
-git clone git@github.com:xxxx(your github username)/VMind.git
-// https
-git clone https://github.com/xxxx(your github username)/VMind.git
+```bash
+git config core.hooksPath .githooks
 ```
 
-### Step2: Get the Project Code
+Hooks check staged whitespace, run Ruff for Python/tooling changes and require a Conventional Commit subject. Python checks require `uv` on PATH. Run relevant tests before committing; hooks do not run model tasks or the complete test suite.
 
-- Enter the VMind folder and add the VMind remote address
-
-```
-git remote add upstream https://github.com/VisActor/VMind.git
-```
-
-- Get the VMind latest source code
-
-```
-git pull upstream develop
-```
-
-### Step3: Create a Branch
-
-- Now we can start contributing our code. VMind default branch is the develop branch. Whether it is feature development, bug fixes, or document writing, please create a new branch and merge it to the develop branch. Use the following code to create the branch:
-
-```
-// Create feature development branch
-git checkout -b feat/xxxx
-
-// Create problem-fixing development branch
-git checkout -b fix/xxxx
-
-// Create document/demo branch
-git checkout -b docs/xxxx
-```
-
-- Now we can modify code on the branch
-- Let's assume we have added some code and made a commit to the stage
-- git commit -a -m "new commit"
-
-### Step4: Merge Changes
-
-- A common problem is that there is new update in the remote upstream(@visactor/vmind) which can cause conflicts when we push the Pull Request. So, before submission, we can merge the commits from other developers with our commits. Use the following code to switch to develop branch:
-
-```
-git checkout develop
-```
-
-- Use the following code to pull the latest code from remote:
-
-```
-git pull upstream develop
-```
-
-- Switch back to your own development branch:
-
-```
-git checkout docs/add-funnel-demo
-```
-
-- Merge the develop commit to branch1:
-
-```
-git rebase develop
-```
-
-- Push the update code to your own branch:
-
-```
-git push upstream docs/add-funnel-demo
-```
-
-### Step5: Submit Pull Request
-
-You can click the New pull request button on your github repo page.
-
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/create_pr.png)
-
-Follow the template to write down the content modified in this submission:
-
-- Check what type of modification this is
-
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/pr_template.png)
-
-- Fill in the related issue
-
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/related_issue.png)
-
-- If a complex change has been made, please provide background and solution
-
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/background_solution.png)
-
-After completing all related information, click Create pull request to submit
-
-## Mini Task Development Guides
-
-"**good first issue**" is a common label in the open source community, aimed to help new contributors find ideal starter issues.
-
-VMind's starter issues can be viewed on the [issue list](https://github.com/VisActor/VMind/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22), which currently includes two types:
-
-- Demo use case creation
-- Simple function development
-
-If you currently **have time and are willing** to contribute to the community, look at the good first issue in the issue list, and pick one that interests you and suits your abilities.
-
-I believe you are a student who finishes what you start, so once you understand and decide to take on an issue, please leave a message under the issue to let everyone know.
-
-### Feature Task
-
-We have prepared some simple and easy-to-master feature development tasks. If you have a basic understanding of Javascript/Typescript, you can take on this type of task.
-
-You can learn more about VMind code architecture by implementing requirements. **You can leave a message under the issue and discuss your plan with everyone**.
-
-1. Based on the develop branch, pull a new `feat/***` branch for development
-1. (If you've already installed it, skip this step) Install [@microsoft/rush](https://rushjs.io/pages/intro/get_started/) globally: `npm i --global @microsoft/rush`
-1. Run `rush update` in the root directory
-1. Run `rush start` to test VMind code locally
-
-![](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/vmind_playground.png)
-
-Click "Set API-Key and LLM URL" at top left corner to set LLM service url and key
-
-5. Confirm all tests pass `rush test`
-5. After completing development, run `rush change` to write changelog and submit changes
-5. Commit all code, and create a Pull Request on Github, inviting others to review
-
-## Embrace the VisActor Community
-
-In addition to contributing code to VIsActor, we encourage you to participate in other activities that help the community thrive, such as:
-
-1. Offering suggestions for project development, feature planning, and more
-2. Creating articles and videos, hosting lectures to promote VisActor
-3. Writing promotional plans and executing them with the team
-
-VisActor is also working hard to help community builders grow together. We plan to (but are not limited to, and look forward to more suggestions from everyone) provide the following assistance:
-
-1. Data visualization development training based on VIsActor, to help participants quickly grow in programming skills, visualization theory, architecture design, and other aspects.
-2. Regularly selecting the "Code Contribution Award" and "Community Promotion Award"
-3. Organizing community members to participate in open-source activities
+Explain the task or defect, the behavior changed and why the selected checks protect it. Include commands, case ids and review outcomes; for agent runs, include the host/model and Skill revision. Report failures and skipped checks. Add cases for distinct behaviors, not just to increase the count. Keep credentials, private data and raw execution evidence out of commits.
