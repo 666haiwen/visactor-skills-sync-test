@@ -1,1 +1,0 @@
-面向增长负责人，分析四个月订阅留存变化和分群差异，区分数据事实与原因假设，生成中文 HTML 数据故事。至少一张真实 VSeed 图表，明确变化的百分点和建议验证的行动。 输入文件：inputs/monthly_retention.csv, inputs/segment_retention.csv。这些是模拟测试数据。已授权从分析、计划到构建端到端完成，无需等待计划确认。使用安装的 data-storytelling Skill 和固定脚本，保留 outputs/runtime/ 下的 plan.md、dataset_map.json、chart_specs.json、spec_map.json、素材报告和页面片段，最终文件为 outputs/output.html。不要读取参考答案；缺失能力或部分完成必须如实说明。

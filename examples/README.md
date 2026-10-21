@@ -2,12 +2,12 @@
 
 这里展示对应 Skill 的任务提示词、输入、最终结果与预览。
 
-## data-storytelling
+## chart-storytelling
 
 | 案例 | 展示能力 | 输入说明 |
 | --- | --- | --- |
-| [全球 CO₂ 数据故事](data-storytelling/global-co2/README.md) | 暗色滚动叙事、排放与温升视角、分步图表 | OWID 数据；仅保留部分输入，无法完整重新生成 |
-| [Las Vegas Web-PPT](data-storytelling/las-vegas-web-ppt/README.md) | 14 张网页幻灯片、商业分析图表、章节转场 | 模拟演示数据，不是真实赛事经营结果 |
+| [全球 CO₂ 数据故事](chart-storytelling/global-co2/README.md) | 暗色滚动叙事、排放与温升视角、分步图表 | OWID 数据；仅保留部分输入，无法完整重新生成 |
+| [Las Vegas Web-PPT](chart-storytelling/las-vegas-web-ppt/README.md) | 14 张网页幻灯片、商业分析图表、章节转场 | 模拟演示数据，不是真实赛事经营结果 |
 
 ## 案例结构
 

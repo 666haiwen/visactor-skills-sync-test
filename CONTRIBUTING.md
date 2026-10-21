@@ -27,7 +27,7 @@ VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/
 
 | Scope | Deterministic regressions | Task/browser coverage |
 | --- | --- | --- |
-| data-storytelling | `uv run pytest tests/data_storytelling -q`; `node --test tests/test_story_vseed.cjs` after browser dependency installation | [Fixed tasks](cases/README.md); HTML and Web-PPT smoke |
+| chart-storytelling | `uv run pytest tests/chart_storytelling -q`; `node --test tests/test_story_vseed.cjs` after browser dependency installation | [Fixed tasks](cases/README.md); HTML and Web-PPT smoke |
 | editorial-magazine | `uv run pytest tests/editorial_magazine -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
 | life-chronicle | `uv run pytest tests/life_chronicle -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
 | Packaging | `uv run pytest tests/test_portable_install.py -q` | Copied Skill execution without the source checkout |
@@ -52,7 +52,7 @@ node tests/browser/node_modules/playwright/cli.js install chromium
 node --test tests/test_browser_assets.mjs tests/test_browser_checks.mjs tests/test_story_vseed.cjs
 uv run python tests/browser/scripts/smoke.py
 # Select a Skill or a single fixed browser case
-uv run python tests/browser/scripts/smoke.py --skill data-storytelling
+uv run python tests/browser/scripts/smoke.py --skill chart-storytelling
 uv run python tests/browser/scripts/smoke.py --case story-ppt
 ```
 

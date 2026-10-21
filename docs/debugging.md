@@ -7,11 +7,11 @@ Use a mature agent such as Codex or Claude Code for Skill development. The host 
 Start from this repository's root. Keep each experiment in its own ignored `.cache/skill-dev/<skill-name>/<run-name>/` directory:
 
 ```bash
-mkdir -p .cache/skill-dev/data-storytelling
-debug_workspace="$(mktemp -d "$PWD/.cache/skill-dev/data-storytelling/run.XXXXXX")"
+mkdir -p .cache/skill-dev/chart-storytelling
+debug_workspace="$(mktemp -d "$PWD/.cache/skill-dev/chart-storytelling/run.XXXXXX")"
 mkdir -p "$debug_workspace/outputs" "$debug_workspace/screenshots" "$debug_workspace/logs"
-cp -R cases/data-storytelling/story-retention-html/inputs "$debug_workspace/inputs"
-cp cases/data-storytelling/story-retention-html/prompt.md "$debug_workspace/prompt.md"
+cp -R cases/chart-storytelling/story-retention-html/inputs "$debug_workspace/inputs"
+cp cases/chart-storytelling/story-retention-html/prompt.md "$debug_workspace/prompt.md"
 ```
 
 Only copy the prompt and inputs for generation. Leave the case README's acceptance criteria in the repository for review after the task. For your own task, put its prompt and source files in the same workspace structure.
@@ -20,7 +20,7 @@ Choose one host, installed and authenticated. For **Codex**:
 
 ```bash
 mkdir -p "$debug_workspace/.agents/skills"
-cp -R skills/data-storytelling "$debug_workspace/.agents/skills/"
+cp -R skills/chart-storytelling "$debug_workspace/.agents/skills/"
 cd "$debug_workspace"
 codex
 ```
@@ -29,14 +29,14 @@ For **Claude Code**, instead run this from the repository root after the shared 
 
 ```bash
 mkdir -p "$debug_workspace/.claude/skills"
-cp -R skills/data-storytelling "$debug_workspace/.claude/skills/"
+cp -R skills/chart-storytelling "$debug_workspace/.claude/skills/"
 cd "$debug_workspace"
 claude
 ```
 
 You can open the workspace in the corresponding app. Install the complete Skill, including references, templates and scripts. See the [Codex Skill documentation](https://developers.openai.com/codex/skills/) and [Claude Code Skill documentation](https://code.claude.com/docs/en/skills) for host-specific discovery.
 
-Ask the agent to use `data-storytelling` to execute `prompt.md`, read inputs from `inputs/` and write generated files to `outputs/`. For another Skill, change the Skill name and supply its task and assets. See the root [runtime requirements](../README.md#install); install any required packages in a local environment under `.cache/`.
+Ask the agent to use `chart-storytelling` to execute `prompt.md`, read inputs from `inputs/` and write generated files to `outputs/`. For another Skill, change the Skill name and supply its task and assets. See the root [runtime requirements](../README.md#install); install any required packages in a local environment under `.cache/`.
 
 ## Iterate and keep evidence
 

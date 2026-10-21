@@ -1,0 +1,1 @@
+面向增长负责人制作中文 Web-PPT，以留存下滑为主线，包含开场、真实 VSeed 图表证据和最终判断/下一步；至少三页且支持键盘翻页。输出 HTML deck，不是 pptx。 输入文件：inputs/monthly_retention.csv, inputs/segment_retention.csv。这些是模拟测试数据。已授权从分析、计划到构建端到端完成，无需等待计划确认。使用安装的 chart-storytelling Skill 和固定脚本，保留 outputs/runtime/ 下的 plan.md、dataset_map.json、chart_specs.json、spec_map.json、素材报告和页面片段，最终文件为 outputs/output-ppt.html。不要读取参考答案；缺失能力或部分完成必须如实说明。

@@ -14,7 +14,7 @@ from story_smoke import build_story
 ROOT = Path(__file__).resolve().parents[3]
 SKILLS = sorted(path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md"))
 CASES = ROOT / "tests/browser/cases"
-ENGINES = {"data-storytelling": "story"}
+ENGINES = {"chart-storytelling": "story"}
 
 
 def write_json(path: Path, value) -> None:
@@ -48,7 +48,7 @@ def load_cases(root: Path = CASES) -> list[dict]:
         if any(not file.is_file() for file in input_files):
             raise ValueError(f"Smoke inputs must be flat files: {directory / 'inputs'}")
         inputs = {file.name: str(file) for file in input_files}
-        if config["builder"] == "story" and skill == "data-storytelling":
+        if config["builder"] == "story" and skill == "chart-storytelling":
             if config["target"] not in {"html", "ppt"}:
                 raise ValueError(f"Unsupported story target: {directory}")
             for name in [

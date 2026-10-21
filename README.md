@@ -10,7 +10,7 @@ Agent skills for the VisActor visualization ecosystem. Create data stories, edit
 
 | Skill | Tasks |
 | --- | --- |
-| [data-storytelling](skills/data-storytelling/SKILL.md) | Data analysis, narrative design, scrollytelling, HTML reports and Web-PPT |
+| [chart-storytelling](skills/chart-storytelling/SKILL.md) | Analysis reports, business briefings and data features, with chart scrollytelling and annotations, delivered as HTML stories or Web-PPT |
 | [editorial-magazine](skills/editorial-magazine/SKILL.md) | Editorial HTML / PNG series for news, biographies, outfits, travel, chronological stories and explainers |
 | [life-chronicle](skills/life-chronicle/SKILL.md) | Biography posters with photo walls, center grids, photo rings and editable timelines |
 
@@ -32,7 +32,7 @@ Each skill includes its instructions, local references, templates and scripts. N
 Run these commands in the project where you want to use the Skills:
 
 ```bash
-npx skills add VisActor/skills --skill data-storytelling
+npx skills add VisActor/skills --skill chart-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
 ```
@@ -44,6 +44,8 @@ npx skills add VisActor/VChart --skill vchart-development-assistant
 npx skills add VisActor/VTable --skill vtable-development-assistant
 ```
 
+If you previously installed `data-storytelling`, remove that installed copy and install `chart-storytelling` to use the renamed Skill.
+
 Follow the installer's prompts to select Codex or Claude Code. You can install each Skill independently. More installation options are documented in the [Skills CLI reference](https://github.com/vercel-labs/skills#usage).
 
 Requirements:
@@ -53,7 +55,7 @@ Requirements:
 
 | Skill | Runtime requirements |
 | --- | --- |
-| data-storytelling | Python 3.10+ (standard library) and Node.js for JavaScript checks; pinned VSeed, VChart, VTable and GSAP load from unpkg |
+| chart-storytelling | Python 3.10+ (standard library) and Node.js for JavaScript checks; pinned VSeed, VChart, VTable and GSAP load from unpkg |
 | editorial-magazine | Python 3.10+, dependencies in its [requirements.txt](skills/editorial-magazine/requirements.txt), and Chromium/Chrome for PNG export; font CDN with system fallbacks |
 | life-chronicle | Python 3.10+, dependencies in its [requirements.txt](skills/life-chronicle/requirements.txt), and Chromium/Chrome for PNG export; pinned VInfo and font CDN, see [environment setup](skills/life-chronicle/references/environment.md) |
 
@@ -63,7 +65,7 @@ Image search, generation and cutout capabilities come from the host; follow the 
 
 After installation, ask your agent to use the selected Skill with your data. For example:
 
-- “Use data-storytelling to explain retention changes in this CSV to our growth lead as a shareable HTML story.”
+- “Use chart-storytelling to explain retention changes in this CSV to our growth lead as a shareable HTML story.”
 - “Use editorial-magazine to turn this article and its sources into an editable HTML and PNG image series.”
 - “Use life-chronicle to create a biography poster from these sourced events and photos, with editable timeline text.”
 
@@ -100,7 +102,7 @@ Keep each runtime Skill self-contained. It must not depend on `tests/`, `cases/`
 From the root of your local repository, install the working copy of a Skill:
 
 ```bash
-npx skills add ./skills/data-storytelling
+npx skills add ./skills/chart-storytelling
 npx skills add ./skills/editorial-magazine
 npx skills add ./skills/life-chronicle
 ```
@@ -117,13 +119,13 @@ uv run pytest tests -q
 uv run ruff check skills tests
 ```
 
-Fixed browser cases live under [tests/browser/cases/](tests/browser/cases/README.md), with configuration, inputs and acceptance criteria together. After the browser setup in that guide, run `uv run python tests/browser/scripts/smoke.py`, or select `--skill data-storytelling` / `--case story-ppt`. These checks do not call a model.
+Fixed browser cases live under [tests/browser/cases/](tests/browser/cases/README.md), with configuration, inputs and acceptance criteria together. After the browser setup in that guide, run `uv run python tests/browser/scripts/smoke.py`, or select `--skill chart-storytelling` / `--case story-ppt`. These checks do not call a model.
 
 ### Skill task debugging
 
 Use Codex, Claude Code or another compatible mature agent to run a [fixed task](cases/README.md) or your own prompt and inputs. Follow [local debugging](docs/debugging.md) to prepare an ignored `.cache/skill-dev/<skill-name>/<run-name>/` workspace and retain artifacts, screenshots and available logs. This repository does not provide a model API harness or unified agent runner.
 
-Fixed tasks currently cover data-storytelling; browser smoke covers its HTML stories and Web-PPT. Editorial-magazine and life-chronicle have script regressions, but no fixed tasks or browser smoke yet. Review generated results for data accuracy, task requirements and interactions; different correct visual designs are acceptable. Agent tasks are not run in CI.
+Fixed tasks currently cover chart-storytelling; browser smoke covers its HTML stories and Web-PPT. Editorial-magazine and life-chronicle have script regressions, but no fixed tasks or browser smoke yet. Review generated results for data accuracy, task requirements and interactions; different correct visual designs are acceptable. Agent tasks are not run in CI.
 
 ## Versioning
 
