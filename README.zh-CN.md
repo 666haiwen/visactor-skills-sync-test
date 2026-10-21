@@ -73,7 +73,7 @@ data-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组装
 
 ## 案例展示
 
-[案例目录](examples/README.md) 已收录 CO₂ 滚动故事和 Las Vegas Web-PPT，包含任务提示词、可获取的输入、最终产物与预览。
+[案例目录](examples/README.md) 已收录 CO₂ 滚动故事、Las Vegas Web-PPT、6组杂志图文案例和4组人物志案例，包含提示词、图片或页面结果，以及输入与复现限制。
 
 ## 开发与维护
 

@@ -73,7 +73,7 @@ Generated JavaScript/HTML is executable code. Preview your own or reviewed artif
 
 ## Examples
 
-The [example gallery](examples/README.md) includes a CO₂ scrolling story and a Las Vegas Web-PPT, with prompts, available inputs, final artifacts and previews.
+The [example gallery](examples/README.md) includes a CO₂ scrolling story, a Las Vegas Web-PPT, six editorial-magazine collections and four life-chronicle collections. Each case links its prompts and results and explains the available inputs and reproduction limits.
 
 ## Development and maintenance
 
