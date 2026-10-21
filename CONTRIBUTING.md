@@ -4,7 +4,7 @@ Changes to Skills should protect a concrete user task or failure mode. Keep runt
 
 ## Start here
 
-Use `develop` as the default and primary maintenance branch. Create contribution branches from the latest `origin/develop` and target pull requests to `develop`.
+Use `main` as the default, user-facing stable branch and `develop` for day-to-day maintenance. Publish reviewed updates through a `develop` → `main` pull request. Create contribution branches from the latest `origin/develop` and target pull requests to `develop`.
 
 VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/VisActor/VChart/tree/develop/skills/vchart-development-assistant) and [VisActor/VTable](https://github.com/VisActor/VTable/tree/develop/skills/vtable-development-assistant). Make changes to those Skills in their owning repositories.
 

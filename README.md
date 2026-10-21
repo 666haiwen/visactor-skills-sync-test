@@ -77,7 +77,7 @@ The [example gallery](examples/README.md) includes a CO₂ scrolling story and a
 
 ## Development and maintenance
 
-This section is for contributors editing Skills or running local tests. The default and primary maintenance branch is `develop`. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+This section is for contributors editing Skills or running local tests. The default branch, `main`, contains the user-facing stable version. Day-to-day development and contribution PRs use `develop`; reviewed updates are published through a `develop` → `main` PR. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Repository layout
 

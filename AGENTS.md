@@ -1,6 +1,6 @@
 # VisActor Skills maintenance
 
-- Keep `develop` as the default and primary maintenance branch. Start new contribution branches from the latest `origin/develop` and target PRs to `develop`.
+- Use `main` as the default, user-facing stable branch and `develop` for day-to-day maintenance. Publish reviewed updates through a `develop` → `main` pull request. Start new contribution branches from the latest `origin/develop` and target PRs to `develop`.
 - Runtime Skills live in `skills/<skill-name>/`, with a lowercase hyphenated directory matching the `SKILL.md` frontmatter name. Each Skill must work when copied independently without sibling Skill or maintenance-directory imports.
 - Keep tests, fixed Agent tasks and generated reports outside Skill directories. Put Skill-specific Python regressions under `tests/<skill_name>/` (hyphens become underscores); shared tooling/packaging checks and current Node.js integrations live at the test root.
 - Keep both root READMEs aligned with the maintained Skills, install commands and runtime requirements. Document externally maintained Skills as upstream links rather than copying them here.
