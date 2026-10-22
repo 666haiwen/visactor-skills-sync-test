@@ -1,17 +1,15 @@
-"""Manually publish a verified main snapshot; read-only unless --publish is given."""
+"""Build release previews and publish verified snapshots for release_plan.py."""
 
-import argparse
 import json
-import os
 import re
-import sys
 import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from package_skills import MANIFEST, PackageError, build_artifacts, digest, git
+from package_skills import MANIFEST, build_artifacts, digest, git
+from package_skills import PackageError as PackageError
 
 TAG_PATTERN = re.compile(r"skills-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", re.ASCII)
 REQUIRED_JOBS = {"Lint and regressions", "Browser smoke (no model)"}
@@ -83,30 +81,16 @@ def version(tag):
     return tuple(map(int, match.groups()))
 
 
-def check_context(env):
-    if (
-        env.get("GITHUB_EVENT_NAME") != "workflow_dispatch"
-        or env.get("GITHUB_REF") != "refs/heads/main"
-    ):
-        raise ReleaseError("Run this workflow manually on main.")
-    sha = env.get("GITHUB_SHA", "")
-    if not re.fullmatch(r"[0-9a-f]{40}", sha):
-        raise ReleaseError("The workflow must identify an exact commit SHA.")
-    return sha
-
-
 def check_main(api, sha):
     if api.request("/git/ref/heads/main")["object"]["sha"] != sha:
-        raise ReleaseError("main has changed. Start a new workflow run on main and review its CI.")
+        raise ReleaseError("main has changed. Review a new release plan for the current main commit.")
 
 
 def check_ci(api, sha):
     runs = [
         run
         for run in api.pages(f"/actions/workflows/ci.yml/runs?head_sha={sha}", "workflow_runs")
-        if run["head_sha"] == sha
-        and run["head_branch"] == "main"
-        and run["event"] in {"push", "workflow_dispatch"}
+        if run["head_sha"] == sha and run["head_branch"] == "main" and run["event"] == "push"
     ]
     if not runs:
         raise ReleaseError("No Skills CI run found for this main commit.")
@@ -174,14 +158,25 @@ def render_release_body(notes, repository, tag, sha, ci_url, previous, manifest)
     return body + "\n"
 
 
-def release(api, tag, sha, root, *, publish=False, output=None):
+def release(api, tag, sha, root, *, publish=False, output=None, preview_ci_url=None):
     version(tag)
+    if publish and preview_ci_url is not None:
+        raise ReleaseError("PR preview context cannot publish.")
     if output is None:
         with tempfile.TemporaryDirectory(prefix="skills-release-") as scratch:
-            return release(api, tag, sha, root, publish=publish, output=Path(scratch) / "artifacts")
-    check_main(api, sha)
+            return release(
+                api,
+                tag,
+                sha,
+                root,
+                publish=publish,
+                output=Path(scratch) / "artifacts",
+                preview_ci_url=preview_ci_url,
+            )
+    if preview_ci_url is None:
+        check_main(api, sha)
     previous = check_version(api, tag)
-    ci_url = check_ci(api, sha)
+    ci_url = preview_ci_url if preview_ci_url is not None else check_ci(api, sha)
     notes = read_release_notes(root, sha, tag)
     manifest = build_artifacts(root, sha, tag, output, api.repository)
     body = render_release_body(notes, api.repository, tag, sha, ci_url, previous, manifest)
@@ -240,45 +235,3 @@ def release(api, tag, sha, root, *, publish=False, output=None):
             "Do not move the tag or blindly republish; the draft or publication may already exist."
         ) from error
     return {**result, "mode": "publish", "published": True, "url": published["html_url"]}
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", required=True)
-    parser.add_argument(
-        "--publish", action="store_true", help="Create the tag and release after checks"
-    )
-    parser.add_argument("--output", type=Path, help="Fresh local artifact directory")
-    args = parser.parse_args()
-    try:
-        version(args.version)
-        sha = check_context(os.environ)
-        repository = os.environ.get("GITHUB_REPOSITORY", "")
-        token = os.environ.get("GH_TOKEN", "")
-        if not re.fullmatch(r"[\w.-]+/[\w.-]+", repository) or not token:
-            raise ReleaseError("GITHUB_REPOSITORY and GH_TOKEN are required.")
-        result = release(
-            GitHub(repository, token),
-            args.version,
-            sha,
-            Path(__file__).resolve().parents[2],
-            publish=args.publish,
-            output=args.output,
-        )
-        output = json.dumps(result, indent=2)
-        print(output)
-        if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
-            with open(summary, "a") as stream:
-                metadata = json.dumps(
-                    {k: v for k, v in result.items() if k != "release_body"}, indent=2
-                )
-                stream.write(f"## Skills release\n\n```json\n{metadata}\n```\n")
-                stream.write("\n## Release body preview\n\n" + result["release_body"])
-    except (ReleaseError, PackageError, OSError, UnicodeError) as error:
-        print(f"Release stopped: {error}", file=sys.stderr)
-        return 1
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

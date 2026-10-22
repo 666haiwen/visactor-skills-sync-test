@@ -135,7 +135,7 @@ uv run ruff check skills tests
 
 正式 Skills 版本使用 `skills-vMAJOR.MINOR.PATCH`：补丁版本用于兼容修复，次版本用于新增 Skill 或兼容能力，主版本用于移除、重命名或不兼容的使用方式调整。
 
-默认安装跟随 `main`，因此可能在正式发版前获取到变化。是否发版由维护者明确决定，合入 `main` 不会自动创建 tag。具体操作见[发布流程](CONTRIBUTING.md#publishing-skills)，已发布版本见 [Releases](https://github.com/VisActor/skills/releases)。
+默认安装跟随 `main`，因此可能在正式发版前获取到变化。发布意图写在 `.github/release-plan.json`：面向 main 的 PR 自动预检，合并一个发生变化且非空的版本计划后，等待 main CI 通过再自动发布。`version: null` 或版本未变化时不发版。发布后保留计划文件，不自动清空，后续合并不会因此重复发布。具体操作见[发布流程](CONTRIBUTING.md#publishing-skills)，已发布版本见 [Releases](https://github.com/VisActor/skills/releases)。
 
 正式 Skills Release 附带 `skills-manifest.json` 和每个 Skill 的独立 ZIP。下游分发平台可通过清单里的内容指纹判断哪些 Skill 发生变化，无需让各 Skill 跟随仓库版本一起更新。具体格式见[发布产物接口](docs/release-artifacts.md)。
 

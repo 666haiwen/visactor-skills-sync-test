@@ -8,9 +8,11 @@
 
 ## Release plan
 
-<!-- Required for develop → main PRs. For ordinary contribution PRs, write N/A. Merging does not automatically publish a tag or Release. -->
+<!-- Required for develop → main PRs. For ordinary contribution PRs, write N/A. The committed .github/release-plan.json is authoritative. Merging a changed non-null plan into main authorizes automatic publication after CI. Null or unchanged plans skip. -->
 
 - Publish a Skills release: Yes / No / N/A
 - Planned version: `skills-vX.Y.Z` / N/A
 - Release highlights and migration notes:
 - Reviewed release notes file: `docs/releases/<tag>.md` / N/A
+- Committed plan: `.github/release-plan.json` (new version / null / unchanged)
+- Automatic PR preview: workflow summary and artifact link / N/A

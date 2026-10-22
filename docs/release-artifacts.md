@@ -9,8 +9,9 @@ GitHub 仓库是源码来源；下游平台负责上架、市场身份/版本映
 - 下游只消费 GitHub Release 中 `draft=false`、`prerelease=false` 且 tag 符合上述规则的版本。当前发布工具不生成预发布版本；预发布后缀、旧 SDK 的 `v*` tag 均不属于本接口。
 - 单独出现 tag 不代表发布完成。发布端先固定 tag 和创建草稿，上传并校验全部附件后才发布 Release。
 - tag、已发布 manifest 和 ZIP 不移动、不复用、不覆盖。更正需要发布新版本。下游发现同一 tag 的 commit 或附件内容变化，应停止并报告。
+- 发布意图来自 `.github/release-plan.json`。main PR 自动预检；合并后仅在 main CI 成功且版本相对合并前变化、非空时自动发布。发布后不清空或回写计划；未变化的计划不再次发布。
 - 发布正文读取同一提交中的 `docs/releases/<tag>.md`；预检展示完整正文，缺失或空文件会阻止发布。该维护文件不属于 Skill 包，也不影响 Skill 内容指纹。
-- 发布前的预检与 CI 构建不创建 tag/Release；Actions 的 `skills-release-preview` 也不是正式发布源。
+- PR 预检与 CI 构建不创建 tag/Release；Actions 的 `skills-release-preview` 和 `skills-release-artifacts` 也不是正式发布源。
 
 ## 附件与包边界
 
@@ -107,7 +108,7 @@ content_sha256 = hashlib.sha256(records.encode('utf-8')).hexdigest()
 ```bash
 uv run --locked python .github/scripts/package_skills.py \
   --commit HEAD --tag skills-v1.0.0 --output .cache/release-preview
-uv run --locked pytest tests/test_release.py tests/test_release_packages.py -q
+uv run --locked pytest tests/test_release.py tests/test_release_plan.py tests/test_release_packages.py -q
 ```
 
 输出目录必须不存在，避免混入旧文件。这里的 `--tag` 仅写入本地 manifest，**不会创建 Git tag 或 Release**。若要复现已发布版本，使用其准确 commit 和 tag。
