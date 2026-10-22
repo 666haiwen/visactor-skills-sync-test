@@ -32,6 +32,7 @@ VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/
 | life-chronicle | `uv run pytest tests/life_chronicle -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
 | Packaging | `uv run pytest tests/test_portable_install.py -q` | Copied Skill execution without the source checkout |
 | Shared test tooling | Relevant root tests, or `uv run pytest tests -q` for changes across modules | [Browser smoke guide](tests/browser/cases/README.md) |
+| Release tooling | `uv run pytest tests/test_release.py -q`; `uv run ruff check .github/scripts tests/test_release.py` | Mocked GitHub API; no tags or Releases are created |
 
 For example, lint `skills/life-chronicle tests/life_chronicle` when changing its Python helpers. Use `uv run ruff check skills tests` for changes spanning Skills or shared tooling. CI runs the full deterministic suite.
 
@@ -57,6 +58,44 @@ uv run python tests/browser/scripts/smoke.py --case story-ppt
 ```
 
 On Linux, use `install --with-deps chromium` when system libraries are missing. Each smoke run creates a new evidence directory under `.cache/`; `--output-dir PATH` selects an explicit directory that must not exist yet.
+
+## Publishing Skills
+
+Maintainers decide when to release; GitHub Actions executes publication. A merge into `main` does not automatically create a tag or Release. Default-branch installations can receive changes as soon as they reach `main`; use a release tag or commit SHA when a fixed snapshot is required.
+
+Version all maintained Skills together using `skills-vMAJOR.MINOR.PATCH`, starting at `skills-v1.0.0`:
+
+| Change | Version increment |
+| --- | --- |
+| Compatible fixes to Skill instructions, scripts or templates | Patch, e.g. `skills-v1.0.1` |
+| New Skills or compatible capabilities | Minor, e.g. `skills-v1.1.0` |
+| Skill removals, renames or incompatible usage changes | Major, e.g. `skills-v2.0.0` |
+| Documentation, showcase or maintenance-only changes | May merge without an immediate release |
+
+Historical VMind SDK `v*` tags remain unchanged and do not participate in Skills version ordering. This workflow publishes stable releases only; prerelease/build suffixes are not accepted. The Python project version is maintenance-tool metadata, not the Skills release version.
+
+### Release procedure
+
+1. Open a `develop` → `main` PR. Fill in the PR template's release plan: whether to publish, the planned tag (or N/A), highlights and migration notes. Ordinary contribution PRs targeting `develop` can use N/A. Review relevant real Agent results for Skill behavior changes before merging; CI does not evaluate model output quality.
+2. Merge the reviewed PR, then wait for **Skills CI on the resulting main commit**. A successful PR run or a run on `develop` is not sufficient.
+3. In **Actions → Publish Skills → Run workflow**, select **main** and enter the full tag, for example `skills-v1.0.0`. The workflow must already exist on the default branch before this entry is available.
+4. Leave **Only check release conditions** selected for a read-only preflight. To actually publish, run it with that option unchecked. A preflight does not reserve a version or approve a later run: publication repeats the checks against its own fixed commit.
+5. Review the workflow summary and the resulting GitHub Release. Confirm its source SHA and release notes. No npm package or custom release asset is required for Skills installation.
+
+The workflow fixes the source to the dispatch commit and refuses to proceed if `main` has moved. It requires the latest `Skills CI` run for that SHA on `main` to succeed, including both **Lint and regressions** and **Browser smoke (no model)**; skipped jobs do not qualify. These are the release script's automated gates; normal PR review and branch-protection requirements still apply.
+
+The tag must be unused and greater than existing stable Skills versions, including versions reserved by draft Releases. Publication creates the tag at the checked SHA and a GitHub Release named **VisActor Skills X.Y.Z**, marked as latest. The first Release lists the included Skills; later Releases generate notes from the previous published Skills release, without choosing a historical SDK release as the baseline. Reviewers should keep PR titles/descriptions suitable for those generated notes.
+
+Publishing uses the workflow's built-in `GITHUB_TOKEN` with `contents: write` and `actions: read`; no personal token is needed. Release runs are serialized and never triggered by a push or merge. Repository rules can still deny tag/release creation; resolve the permission issue without bypassing protection.
+
+If checks fail, fix the cause and start a new run once `main` CI passes. If GitHub returns an error or times out during publication, inspect the tag and Releases page before retrying: a write may have succeeded despite a lost response. Existing tags and Releases are never overwritten by this workflow. If only a tag exists, verify its SHA and finish the matching Release manually; do not delete or move it to make a retry pass.
+
+Local verification does not publish:
+
+```bash
+uv run --locked ruff check .github/scripts tests/test_release.py
+uv run --locked pytest tests/test_release.py -q
+```
 
 ## Before committing
 

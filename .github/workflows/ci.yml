@@ -27,7 +27,7 @@ jobs:
           python-version: '3.12'
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run --locked ruff check skills tests
+      - run: uv run --locked ruff check skills tests .github/scripts
       - run: uv run --locked pytest tests -q
 
   browser:

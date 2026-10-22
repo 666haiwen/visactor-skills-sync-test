@@ -133,6 +133,10 @@ uv run ruff check skills tests
 
 日常修改通过 Git commit 标识，不需要每次调整 Skill 都创建发布 tag。
 
+正式 Skills 版本使用 `skills-vMAJOR.MINOR.PATCH`：补丁版本用于兼容修复，次版本用于新增 Skill 或兼容能力，主版本用于移除、重命名或不兼容的使用方式调整。
+
+默认安装跟随 `main`，因此可能在正式发版前获取到变化。是否发版由维护者明确决定，合入 `main` 不会自动创建 tag。具体操作见[发布流程](CONTRIBUTING.md#publishing-skills)，已发布版本见 [Releases](https://github.com/VisActor/skills/releases)。
+
 反馈问题或复现结果时，请记录发布 tag 或 commit SHA；分支内容会随开发变化。VTable `1.26.8` 等依赖版本表示底层库的版本，不是 Skill 的发布版本。历史 VMind SDK 的 tag 保持不变，仍归属于原 SDK。
 
 ## VMind 历史版本

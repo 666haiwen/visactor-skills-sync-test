@@ -1,0 +1,51 @@
+name: Publish Skills
+run-name: Skills ${{ inputs.version }} (preflight=${{ inputs.dry_run }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag, for example skills-v1.0.0'
+        required: true
+        type: string
+      dry_run:
+        description: 'Only check release conditions; do not create a tag or Release'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skills-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          python-version: '3.12'
+          enable-cache: false
+      - name: Check and publish the selected main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(--version "$RELEASE_VERSION")
+          if [ "$DRY_RUN" = "false" ]; then
+            args+=(--publish)
+          fi
+          uv run --no-project python .github/scripts/release.py "${args[@]}"
