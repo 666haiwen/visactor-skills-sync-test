@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
           python-version: '3.12'
@@ -31,6 +32,20 @@ jobs:
       - run: uv run --locked pytest tests -q
       - name: Validate Skill release packages from this commit
         run: uv run --locked python .github/scripts/package_skills.py --commit HEAD --tag skills-v0.0.0 --output .cache/ci-release-artifacts
+      - name: Preview release plan for main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --no-project python .github/scripts/release_plan.py --mode preview --output .cache/release-preview
+      - name: Save release preview packages
+        if: ${{ always() && github.event_name == 'pull_request' && github.base_ref == 'main' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: skills-release-preview
+          path: .cache/release-preview/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
 
   browser:
     name: Browser smoke (no model)

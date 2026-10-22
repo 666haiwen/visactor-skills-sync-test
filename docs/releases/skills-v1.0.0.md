@@ -24,7 +24,10 @@ templates or scripts relative to the preceding `main` snapshot.
 - Publication requires successful CI for the exact `main` commit and an unused
   Skills version. Explicit tag creation prevents silently reusing a tag created
   concurrently by another publisher.
-- Preflight displays the full reviewed release notes. Packages are uploaded to
+- Main PRs automatically preview the full reviewed release notes and packages.
+  A changed non-null `.github/release-plan.json` authorizes automatic
+  publication after the final main commit passes CI; no manual dispatch is
+  required. The plan remains in Git and unchanged plans do not republish. Packages are uploaded to
   a draft and verified before the Release becomes available to consumers.
 
 ## Migration

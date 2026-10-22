@@ -135,7 +135,7 @@ Ordinary edits are identified by Git commits; each Skill change does not require
 
 Formal Skills releases use `skills-vMAJOR.MINOR.PATCH`: patch versions contain compatible fixes, minor versions add Skills or compatible capabilities, and major versions cover removals, renames or incompatible usage changes.
 
-Default installations follow `main`, so they can receive changes before a formal release. Maintainers explicitly choose when to publish; merging into `main` does not automatically create a tag. See the [release procedure](CONTRIBUTING.md#publishing-skills) and [published releases](https://github.com/VisActor/skills/releases).
+Default installations follow `main`, so they can receive changes before a formal release. Maintainers declare release intent in `.github/release-plan.json`. Main PRs automatically preview changed release plans; merging a changed non-null version authorizes automatic publication after main CI passes. Null or unchanged plans do not publish. The plan is retained after publication, so later merges do not republish it. See the [release procedure](CONTRIBUTING.md#publishing-skills) and [published releases](https://github.com/VisActor/skills/releases).
 
 Each formal Skills Release includes `skills-manifest.json` and one ZIP per Skill. Distributors can use the manifest's per-Skill content fingerprints to identify changes independently of repository versions. See the [artifact contract](docs/release-artifacts.md).
 

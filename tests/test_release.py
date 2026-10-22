@@ -47,11 +47,13 @@ def api(publisher):
             self.assets = []
             self.calls = []
             self.main = SHA
+            self.tag_sha = SHA
             self.tags = []
             self.releases = []
             self.runs = [
                 {
                     "id": 42,
+                    "path": ".github/workflows/ci.yml",
                     "head_sha": SHA,
                     "head_branch": "main",
                     "event": "push",
@@ -71,7 +73,13 @@ def api(publisher):
             if route == "/git/ref/heads/main":
                 return {"object": {"sha": self.main}}
             if route.startswith("/git/ref/tags/"):
-                return {"object": {"sha": SHA}} if route.rsplit("/", 1)[1] in self.tags else None
+                return (
+                    {"object": {"sha": self.tag_sha}}
+                    if route.rsplit("/", 1)[1] in self.tags
+                    else None
+                )
+            if route == "/actions/runs/42":
+                return self.runs[0]
             if route == "/actions/workflows/ci.yml/runs":
                 return {"workflow_runs": self.runs}
             if route == "/actions/runs/42/jobs":
@@ -123,40 +131,11 @@ def test_invalid_version_never_calls_api(publisher, api, tag):
     assert not api.calls
 
 
-@pytest.mark.parametrize(
-    "ref,event",
-    [
-        ("refs/heads/develop", "workflow_dispatch"),
-        ("refs/tags/skills-v1.0.0", "workflow_dispatch"),
-        ("refs/heads/main", "push"),
-    ],
-)
-def test_only_manual_main_context_is_accepted(publisher, ref, event):
-    with pytest.raises(publisher.ReleaseError, match="manually on main"):
-        publisher.check_context({"GITHUB_REF": ref, "GITHUB_EVENT_NAME": event, "GITHUB_SHA": SHA})
-
-
 def test_preflight_is_read_only(publisher, api):
     result = publisher.release(api, TAG, SHA, ROOT)
     assert result["published"] is False and all(data is None for _, data in api.calls)
     assert result["release_body"].startswith("Reviewed migration steps.")
     assert "compare/" not in result["release_body"]
-
-
-def test_workflow_summary_displays_complete_release_body(publisher, api, monkeypatch, tmp_path):
-    summary = tmp_path / "summary.md"
-    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
-    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
-    monkeypatch.setenv("GITHUB_SHA", SHA)
-    monkeypatch.setenv("GITHUB_REPOSITORY", "example/repo")
-    monkeypatch.setenv("GH_TOKEN", "test-token")
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
-    monkeypatch.setattr(publisher, "GitHub", lambda *args: api)
-    monkeypatch.setattr(publisher.sys, "argv", ["release.py", "--version", TAG])
-    expected = publisher.release(api, TAG, SHA, ROOT)["release_body"]
-    assert publisher.main() == 0
-    assert summary.read_text().endswith("## Release body preview\n\n" + expected)
-    assert all(data is None for _, data in api.calls)
 
 
 @pytest.mark.parametrize("kind", ["tag", "draft", "published", "downgrade"])
