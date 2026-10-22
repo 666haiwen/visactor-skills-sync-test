@@ -29,6 +29,8 @@ jobs:
       - run: uv sync --locked
       - run: uv run --locked ruff check skills tests .github/scripts
       - run: uv run --locked pytest tests -q
+      - name: Validate Skill release packages from this commit
+        run: uv run --locked python .github/scripts/package_skills.py --commit HEAD --tag skills-v0.0.0 --output .cache/ci-release-artifacts
 
   browser:
     name: Browser smoke (no model)

@@ -137,6 +137,8 @@ uv run ruff check skills tests
 
 默认安装跟随 `main`，因此可能在正式发版前获取到变化。是否发版由维护者明确决定，合入 `main` 不会自动创建 tag。具体操作见[发布流程](CONTRIBUTING.md#publishing-skills)，已发布版本见 [Releases](https://github.com/VisActor/skills/releases)。
 
+正式 Skills Release 附带 `skills-manifest.json` 和每个 Skill 的独立 ZIP。下游分发平台可通过清单里的内容指纹判断哪些 Skill 发生变化，无需让各 Skill 跟随仓库版本一起更新。具体格式见[发布产物接口](docs/release-artifacts.md)。
+
 反馈问题或复现结果时，请记录发布 tag 或 commit SHA；分支内容会随开发变化。VTable `1.26.8` 等依赖版本表示底层库的版本，不是 Skill 的发布版本。历史 VMind SDK 的 tag 保持不变，仍归属于原 SDK。
 
 ## VMind 历史版本

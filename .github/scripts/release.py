@@ -5,10 +5,13 @@ import json
 import os
 import re
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+from package_skills import MANIFEST, PackageError, build_artifacts, digest
 
 TAG_PATTERN = re.compile(r"skills-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", re.ASCII)
 REQUIRED_JOBS = {"Lint and regressions", "Browser smoke (no model)"}
@@ -20,29 +23,46 @@ class ReleaseError(Exception):
 
 class GitHub:
     def __init__(self, repository, token):
+        self.repository = repository
         self.base = f"https://api.github.com/repos/{repository}"
         self.token = token
 
-    def request(self, path, data=None, *, missing_ok=False):
-        request = urllib.request.Request(
+    def request(self, path, data=None, *, missing_ok=False, method=None):
+        return self._send(
             self.base + path,
-            data=json.dumps(data).encode() if data is not None else None,
+            json.dumps(data).encode() if data is not None else None,
+            "application/json",
+            missing_ok=missing_ok,
+            method=method,
+        )
+
+    def upload(self, release_id, path):
+        url = f"https://uploads.github.com/repos/{self.repository}/releases/{release_id}/assets"
+        url += "?" + urllib.parse.urlencode({"name": path.name})
+        content_type = "application/zip" if path.suffix == ".zip" else "application/json"
+        return self._send(url, path.read_bytes(), content_type)
+
+    def _send(self, url, data, content_type, *, missing_ok=False, method=None):
+        request = urllib.request.Request(
+            url,
+            data=data,
+            method=method,
             headers={
                 "Authorization": f"Bearer {self.token}",
                 "Accept": "application/vnd.github+json",
                 "X-GitHub-Api-Version": "2022-11-28",
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with urllib.request.urlopen(request, timeout=60) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
             if missing_ok and error.code == 404:
                 return None
-            raise ReleaseError(f"GitHub API {path}: HTTP {error.code}") from None
+            raise ReleaseError(f"GitHub API {url}: HTTP {error.code}") from None
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
-            raise ReleaseError(f"GitHub API {path}: {type(error).__name__}") from None
+            raise ReleaseError(f"GitHub API {url}: {type(error).__name__}") from None
 
     def pages(self, path, key=None):
         separator = "&" if "?" in path else "?"
@@ -127,12 +147,22 @@ def check_version(api, tag):
     return max(published, key=version) if published else None
 
 
-def release(api, tag, sha, root, *, publish=False):
+def release(api, tag, sha, root, *, publish=False, output=None):
     version(tag)
+    if output is None:
+        with tempfile.TemporaryDirectory(prefix="skills-release-") as scratch:
+            return release(api, tag, sha, root, publish=publish, output=Path(scratch) / "artifacts")
     check_main(api, sha)
     previous = check_version(api, tag)
     ci_url = check_ci(api, sha)
-    result = {"tag": tag, "sha": sha, "previous_tag": previous, "ci_url": ci_url}
+    manifest = build_artifacts(root, sha, tag, output, api.repository)
+    result = {
+        "tag": tag,
+        "sha": sha,
+        "previous_tag": previous,
+        "ci_url": ci_url,
+        "assets": [s["package"]["asset"] for s in manifest["skills"]] + [MANIFEST],
+    }
     if not publish:
         return {**result, "mode": "preflight", "published": False}
 
@@ -146,9 +176,7 @@ def release(api, tag, sha, root, *, publish=False):
             },
         )["body"]
     else:
-        skills = sorted(path.parent.name for path in (root / "skills").glob("*/SKILL.md"))
-        if not skills:
-            raise ReleaseError("No Skills found in the checked-out release snapshot.")
+        skills = [skill["name"] for skill in manifest["skills"]]
         notes = "First VisActor Skills release. Included Skills:\n\n" + "\n".join(
             f"- `{name}`" for name in skills
         )
@@ -158,7 +186,8 @@ def release(api, tag, sha, root, *, publish=False):
     check_main(api, sha)
     check_version(api, tag)
     check_ci(api, sha)
-    # GitHub creates the tag at this exact SHA as part of creating the release.
+    # Reserve the exact ref first: concurrent creation must fail, never silently retarget.
+    api.request("/git/refs", {"ref": f"refs/tags/{tag}", "sha": sha})
     created = api.request(
         "/releases",
         {
@@ -166,12 +195,37 @@ def release(api, tag, sha, root, *, publish=False):
             "target_commitish": sha,
             "name": f"VisActor Skills {tag.removeprefix('skills-v')}",
             "body": notes,
-            "draft": False,
+            "draft": True,
             "prerelease": False,
-            "make_latest": "true",
         },
     )
-    return {**result, "mode": "publish", "published": True, "url": created["html_url"]}
+    release_id = created["id"]
+    paths = [output / name for name in result["assets"]]
+    expected = {
+        path.name: (path.stat().st_size, "sha256:" + digest(path.read_bytes())) for path in paths
+    }
+    try:
+        for path in paths:
+            api.upload(release_id, path)
+        uploaded = list(api.pages(f"/releases/{release_id}/assets"))
+        actual = {
+            asset["name"]: (asset["size"], asset.get("digest"))
+            for asset in uploaded
+            if asset["state"] == "uploaded"
+        }
+        if len(uploaded) != len(expected) or actual != expected:
+            raise ReleaseError("Uploaded assets do not match the local manifest/ZIP checksums.")
+        if api.request(f"/git/ref/tags/{tag}")["object"]["sha"] != sha:
+            raise ReleaseError("Release tag no longer matches the verified commit.")
+        published = api.request(
+            f"/releases/{release_id}", {"draft": False, "make_latest": "true"}, method="PATCH"
+        )
+    except ReleaseError as error:
+        raise ReleaseError(
+            f"Release {tag} requires remote inspection before retrying: {error}. "
+            "Do not move the tag or blindly republish; the draft or publication may already exist."
+        ) from error
+    return {**result, "mode": "publish", "published": True, "url": published["html_url"]}
 
 
 def main():
@@ -180,6 +234,7 @@ def main():
     parser.add_argument(
         "--publish", action="store_true", help="Create the tag and release after checks"
     )
+    parser.add_argument("--output", type=Path, help="Fresh local artifact directory")
     args = parser.parse_args()
     try:
         version(args.version)
@@ -194,13 +249,14 @@ def main():
             sha,
             Path(__file__).resolve().parents[2],
             publish=args.publish,
+            output=args.output,
         )
         output = json.dumps(result, indent=2)
         print(output)
         if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
             with open(summary, "a") as stream:
                 stream.write(f"## Skills release\n\n```json\n{output}\n```\n")
-    except ReleaseError as error:
+    except (ReleaseError, PackageError, OSError, UnicodeError) as error:
         print(f"Release stopped: {error}", file=sys.stderr)
         return 1
     return 0

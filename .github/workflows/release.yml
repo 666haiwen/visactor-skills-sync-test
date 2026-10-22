@@ -44,8 +44,17 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          args=(--version "$RELEASE_VERSION")
+          args=(--version "$RELEASE_VERSION" --output .cache/release-artifacts)
           if [ "$DRY_RUN" = "false" ]; then
             args+=(--publish)
           fi
           uv run --no-project python .github/scripts/release.py "${args[@]}"
+      - name: Save local release packages for inspection
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: skills-release-preview
+          path: .cache/release-artifacts/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7

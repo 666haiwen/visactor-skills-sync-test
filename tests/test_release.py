@@ -12,12 +12,22 @@ TAG = "skills-v1.0.0"
 
 
 @pytest.fixture
-def publisher():
+def publisher(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / ".github/scripts"))
     spec = importlib.util.spec_from_file_location(
         "skills_release", ROOT / ".github/scripts/release.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+
+    def build(root, sha, tag, output, repository):
+        output.mkdir(parents=True)
+        (output / "example.zip").write_bytes(b"mock zip; real packaging tested separately")
+        manifest = {"skills": [{"name": "example", "package": {"asset": "example.zip"}}]}
+        (output / module.MANIFEST).write_text("{}")
+        return manifest
+
+    monkeypatch.setattr(module, "build_artifacts", build)
     return module
 
 
@@ -25,6 +35,8 @@ def publisher():
 def api(publisher):
     class FakeGitHub(publisher.GitHub):
         def __init__(self):
+            self.repository = "example/repo"
+            self.assets = []
             self.calls = []
             self.main = SHA
             self.tags = []
@@ -45,7 +57,7 @@ def api(publisher):
                 for name in publisher.REQUIRED_JOBS
             ]
 
-        def request(self, path, data=None, *, missing_ok=False):
+        def request(self, path, data=None, *, missing_ok=False, method=None):
             self.calls.append((path, data))
             route = urlsplit(path).path
             if route == "/git/ref/heads/main":
@@ -63,8 +75,26 @@ def api(publisher):
             if route == "/releases/generate-notes":
                 return {"body": "Reviewed changes since the previous Skills release."}
             if route == "/releases" and data is not None:
-                return {"html_url": f"https://example.test/releases/{data['tag_name']}"}
+                return {"id": 7, "html_url": f"https://example.test/releases/{data['tag_name']}"}
+            if route == "/git/refs":
+                self.tags.append(data["ref"].removeprefix("refs/tags/"))
+                return {}
+            if route == "/releases/7/assets":
+                return self.assets
+            if route == "/releases/7" and method == "PATCH":
+                return {"html_url": "https://example.test/release/7"}
             raise AssertionError(f"Unexpected API request: {path}")
+
+        def upload(self, release_id, path):
+            asset = {
+                "name": path.name,
+                "size": path.stat().st_size,
+                "digest": "sha256:" + publisher.digest(path.read_bytes()),
+                "state": "uploaded",
+            }
+            self.calls.append((f"/upload/{release_id}/{path.name}", asset))
+            self.assets.append(asset)
+            return asset
 
     return FakeGitHub()
 
@@ -177,11 +207,16 @@ def test_first_release_ignores_sdk_versions_and_targets_exact_commit(publisher, 
     skill.write_text("name: example")
     publisher.release(api, TAG, SHA, tmp_path, publish=True)
     writes = [(path, data) for path, data in api.calls if data is not None]
-    assert len(writes) == 1
-    path, payload = writes[0]
+    assert writes[0] == ("/git/refs", {"ref": f"refs/tags/{TAG}", "sha": SHA})
+    path, payload = writes[1]
     assert path == "/releases" and payload["target_commitish"] == SHA
-    assert payload["tag_name"] == TAG and payload["make_latest"] == "true"
-    assert "`example`" in payload["body"] and payload["draft"] is False
+    assert payload["tag_name"] == TAG and payload["draft"] is True
+    assert "`example`" in payload["body"]
+    assert [path for path, _ in writes[2:4]] == [
+        "/upload/7/example.zip",
+        "/upload/7/skills-manifest.json",
+    ]
+    assert writes[-1] == ("/releases/7", {"draft": False, "make_latest": "true"})
 
 
 def test_later_notes_use_previous_skills_release_not_sdk(publisher, api):
@@ -223,3 +258,66 @@ def test_api_failure_is_not_treated_as_missing_tag(publisher, monkeypatch, statu
     monkeypatch.setattr(publisher.urllib.request, "urlopen", fail)
     with pytest.raises(publisher.ReleaseError, match=f"HTTP {status}"):
         publisher.GitHub("example/repo", "test-token").request("/git/ref/tags/tag", missing_ok=True)
+
+
+@pytest.mark.parametrize("failure", ["upload", "missing", "digest", "state", "tag"])
+def test_incomplete_or_mismatched_assets_never_publish(publisher, api, failure):
+    upload = api.upload
+
+    def fail_upload(release_id, path):
+        if failure == "upload":
+            raise publisher.ReleaseError("upload failed")
+        result = upload(release_id, path)
+        if failure == "missing":
+            api.assets.pop()
+        elif failure == "digest":
+            result["digest"] = "sha256:wrong"
+        elif failure == "state":
+            result["state"] = "starter"
+        elif failure == "tag":
+            api.tags.clear()
+        return result
+
+    api.upload = fail_upload
+    if failure == "tag":
+        request = api.request
+
+        def wrong_tag(path, data=None, **kwargs):
+            if path == f"/git/ref/tags/{TAG}" and any(
+                p.startswith("/upload/") for p, _ in api.calls
+            ):
+                return {"object": {"sha": "b" * 40}}
+            return request(path, data, **kwargs)
+
+        api.request = wrong_tag
+    with pytest.raises(publisher.ReleaseError, match="remote inspection"):
+        publisher.release(api, TAG, SHA, ROOT, publish=True)
+    assert not any(path == "/releases/7" for path, _ in api.calls)
+
+
+def test_packaging_failure_happens_before_remote_writes(publisher, api, monkeypatch):
+    def fail(*args):
+        raise publisher.PackageError("invalid package")
+
+    monkeypatch.setattr(publisher, "build_artifacts", fail)
+    with pytest.raises(publisher.PackageError):
+        publisher.release(api, TAG, SHA, ROOT, publish=True)
+    assert all(data is None for _, data in api.calls)
+
+
+def test_asset_upload_uses_binary_body_and_fixed_github_upload_host(
+    publisher, monkeypatch, tmp_path
+):
+    path = tmp_path / "example.zip"
+    path.write_bytes(b"zip bytes")
+    client = publisher.GitHub("example/repo", "test-token")
+    calls = []
+    monkeypatch.setattr(client, "_send", lambda *args, **kwargs: calls.append(args))
+    client.upload(7, path)
+    assert calls == [
+        (
+            "https://uploads.github.com/repos/example/repo/releases/7/assets?name=example.zip",
+            b"zip bytes",
+            "application/zip",
+        )
+    ]

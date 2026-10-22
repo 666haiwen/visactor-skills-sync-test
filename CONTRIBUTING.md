@@ -32,7 +32,7 @@ VChart and VTable Skills are maintained in [VisActor/VChart](https://github.com/
 | life-chronicle | `uv run pytest tests/life_chronicle -q` | No fixed tasks or browser smoke yet; inspect outputs with an agent |
 | Packaging | `uv run pytest tests/test_portable_install.py -q` | Copied Skill execution without the source checkout |
 | Shared test tooling | Relevant root tests, or `uv run pytest tests -q` for changes across modules | [Browser smoke guide](tests/browser/cases/README.md) |
-| Release tooling | `uv run pytest tests/test_release.py -q`; `uv run ruff check .github/scripts tests/test_release.py` | Mocked GitHub API; no tags or Releases are created |
+| Release tooling | `uv run pytest tests/test_release.py tests/test_release_packages.py -q`; `uv run ruff check .github/scripts tests/test_release.py tests/test_release_packages.py` | Mocked GitHub API; no tags or Releases are created |
 
 For example, lint `skills/life-chronicle tests/life_chronicle` when changing its Python helpers. Use `uv run ruff check skills tests` for changes spanning Skills or shared tooling. CI runs the full deterministic suite.
 
@@ -40,7 +40,7 @@ For example, lint `skills/life-chronicle tests/life_chronicle` when changing its
 
 `Skills CI` runs on pull requests and pushes to `main`/`develop`, with two jobs:
 
-- **Lint and regressions**: install locked Python dependencies, run Ruff and deterministic tests, including copied Skill execution and fixed-input integrity checks.
+- **Lint and regressions**: install locked Python dependencies, run Ruff and deterministic tests, including copied Skill execution and fixed-input integrity checks. Build and verify release ZIPs/manifest from the checked-out Git commit using the same packager as publication; the CI-only label `skills-v0.0.0` creates no tag or Release.
 - **Browser smoke (no model)**: use copied Skills to generate a fixed HTML story and Web-PPT, then check chart rendering, slide navigation and browser errors. Pinned npm packages serve CDN requests locally; unexpected external requests fail. Save JSON reports, logs, generated HTML and screenshots for seven days.
 
 Neither job calls a model or needs model credentials. Browser smoke checks script/template integration. Execute fixed Agent tasks locally and review their results separately.
@@ -79,23 +79,28 @@ Historical VMind SDK `v*` tags remain unchanged and do not participate in Skills
 1. Open a `develop` → `main` PR. Fill in the PR template's release plan: whether to publish, the planned tag (or N/A), highlights and migration notes. Ordinary contribution PRs targeting `develop` can use N/A. Review relevant real Agent results for Skill behavior changes before merging; CI does not evaluate model output quality.
 2. Merge the reviewed PR, then wait for **Skills CI on the resulting main commit**. A successful PR run or a run on `develop` is not sufficient.
 3. In **Actions → Publish Skills → Run workflow**, select **main** and enter the full tag, for example `skills-v1.0.0`. The workflow must already exist on the default branch before this entry is available.
-4. Leave **Only check release conditions** selected for a read-only preflight. To actually publish, run it with that option unchecked. A preflight does not reserve a version or approve a later run: publication repeats the checks against its own fixed commit.
-5. Review the workflow summary and the resulting GitHub Release. Confirm its source SHA and release notes. No npm package or custom release asset is required for Skills installation.
+4. Leave **Only check release conditions** selected for a preflight that builds local artifacts but performs no GitHub release/tag writes. To actually publish, run it with that option unchecked. A preflight does not reserve a version or approve a later run: publication repeats the checks against its own fixed commit.
+5. Review the workflow summary and the resulting GitHub Release. Confirm its source SHA and release notes. The Release contains `skills-manifest.json` and one ZIP per Skill. Ordinary repository-based installation still works without downloading these assets. See the [artifact contract](docs/release-artifacts.md) for downstream consumption.
 
 The workflow fixes the source to the dispatch commit and refuses to proceed if `main` has moved. It requires the latest `Skills CI` run for that SHA on `main` to succeed, including both **Lint and regressions** and **Browser smoke (no model)**; skipped jobs do not qualify. These are the release script's automated gates; normal PR review and branch-protection requirements still apply.
 
-The tag must be unused and greater than existing stable Skills versions, including versions reserved by draft Releases. Publication creates the tag at the checked SHA and a GitHub Release named **VisActor Skills X.Y.Z**, marked as latest. The first Release lists the included Skills; later Releases generate notes from the previous published Skills release, without choosing a historical SDK release as the baseline. Reviewers should keep PR titles/descriptions suitable for those generated notes.
+The tag must be unused and greater than existing stable Skills versions, including versions reserved by draft Releases. Publication creates the tag at the checked SHA and a draft Release named **VisActor Skills X.Y.Z**. After all ZIPs and the manifest are uploaded, their names, sizes, SHA-256 digests and uploaded state must match before the Release is published and marked as latest. An interrupted upload leaves a tag/draft for inspection, not a complete release for downstream synchronization. The first Release lists the included Skills; later Releases generate notes from the previous published Skills release, without choosing a historical SDK release as the baseline. Reviewers should keep PR titles/descriptions suitable for those generated notes.
 
 Publishing uses the workflow's built-in `GITHUB_TOKEN` with `contents: write` and `actions: read`; no personal token is needed. Release runs are serialized and never triggered by a push or merge. Repository rules can still deny tag/release creation; resolve the permission issue without bypassing protection.
 
-If checks fail, fix the cause and start a new run once `main` CI passes. If GitHub returns an error or times out during publication, inspect the tag and Releases page before retrying: a write may have succeeded despite a lost response. Existing tags and Releases are never overwritten by this workflow. If only a tag exists, verify its SHA and finish the matching Release manually; do not delete or move it to make a retry pass.
+If checks fail, fix the cause and start a new run once `main` CI passes. If GitHub returns an error or times out during publication, inspect the tag and Releases page before retrying: a write may have succeeded despite a lost response. Existing tags and Releases are never overwritten by this workflow. If a tag or draft exists, verify its SHA and rebuild from that exact commit in a fresh directory. Before completing the Release manually, verify every asset against the rebuilt manifest (including the manifest asset itself). Never publish a partial draft or delete/move a tag to make a retry pass. A missing server-reported asset digest stops publication; do not bypass the check.
+
+CI and publication use `.github/scripts/package_skills.py`, which reads Git objects rather than working files. Both release modes retain local packages as a seven-day Actions artifact named `skills-release-preview`; this is diagnostic output, not a formal release.
 
 Local verification does not publish:
 
 ```bash
-uv run --locked ruff check .github/scripts tests/test_release.py
-uv run --locked pytest tests/test_release.py -q
+uv run --locked ruff check .github/scripts tests/test_release.py tests/test_release_packages.py
+uv run --locked pytest tests/test_release.py tests/test_release_packages.py -q
+uv run --locked python .github/scripts/package_skills.py --commit HEAD --tag skills-v1.0.0 --output .cache/release-preview
 ```
+
+Use a new output directory for each build. The local command treats the tag as manifest metadata and never creates a Git tag.
 
 ## Before committing
 
