@@ -13,3 +13,4 @@
 - Publish a Skills release: Yes / No / N/A
 - Planned version: `skills-vX.Y.Z` / N/A
 - Release highlights and migration notes:
+- Reviewed release notes file: `docs/releases/<tag>.md` / N/A

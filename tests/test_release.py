@@ -1,6 +1,7 @@
 """Release contracts, using an in-memory GitHub API; never publish real artifacts."""
 
 import importlib.util
+import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -12,13 +13,19 @@ TAG = "skills-v1.0.0"
 
 
 @pytest.fixture
-def publisher(monkeypatch):
+def release_module(monkeypatch):
     monkeypatch.syspath_prepend(str(ROOT / ".github/scripts"))
     spec = importlib.util.spec_from_file_location(
         "skills_release", ROOT / ".github/scripts/release.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture
+def publisher(release_module, monkeypatch):
+    module = release_module
 
     def build(root, sha, tag, output, repository):
         output.mkdir(parents=True)
@@ -28,6 +35,7 @@ def publisher(monkeypatch):
         return manifest
 
     monkeypatch.setattr(module, "build_artifacts", build)
+    monkeypatch.setattr(module, "read_release_notes", lambda *args: "Reviewed migration steps.")
     return module
 
 
@@ -72,8 +80,6 @@ def api(publisher):
                 return [{"name": tag} for tag in self.tags]
             if route == "/releases" and data is None:
                 return self.releases
-            if route == "/releases/generate-notes":
-                return {"body": "Reviewed changes since the previous Skills release."}
             if route == "/releases" and data is not None:
                 return {"id": 7, "html_url": f"https://example.test/releases/{data['tag_name']}"}
             if route == "/git/refs":
@@ -133,6 +139,24 @@ def test_only_manual_main_context_is_accepted(publisher, ref, event):
 def test_preflight_is_read_only(publisher, api):
     result = publisher.release(api, TAG, SHA, ROOT)
     assert result["published"] is False and all(data is None for _, data in api.calls)
+    assert result["release_body"].startswith("Reviewed migration steps.")
+    assert "compare/" not in result["release_body"]
+
+
+def test_workflow_summary_displays_complete_release_body(publisher, api, monkeypatch, tmp_path):
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    monkeypatch.setenv("GITHUB_SHA", SHA)
+    monkeypatch.setenv("GITHUB_REPOSITORY", "example/repo")
+    monkeypatch.setenv("GH_TOKEN", "test-token")
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    monkeypatch.setattr(publisher, "GitHub", lambda *args: api)
+    monkeypatch.setattr(publisher.sys, "argv", ["release.py", "--version", TAG])
+    expected = publisher.release(api, TAG, SHA, ROOT)["release_body"]
+    assert publisher.main() == 0
+    assert summary.read_text().endswith("## Release body preview\n\n" + expected)
+    assert all(data is None for _, data in api.calls)
 
 
 @pytest.mark.parametrize("kind", ["tag", "draft", "published", "downgrade"])
@@ -222,25 +246,118 @@ def test_first_release_ignores_sdk_versions_and_targets_exact_commit(publisher, 
 def test_later_notes_use_previous_skills_release_not_sdk(publisher, api):
     api.tags = ["v2.0.8", "skills-v1.9.0", "skills-v1.10.0"]
     api.releases = [{"tag_name": tag, "draft": False, "prerelease": False} for tag in api.tags]
+    preview = publisher.release(api, "skills-v1.11.0", SHA, ROOT)
+    assert "compare/skills-v1.10.0...skills-v1.11.0" in preview["release_body"]
+    assert all(data is None for _, data in api.calls)
     publisher.release(api, "skills-v1.11.0", SHA, ROOT, publish=True)
-    notes = next(data for path, data in api.calls if path == "/releases/generate-notes")
-    assert notes["previous_tag_name"] == "skills-v1.10.0"
+    payload = next(data for path, data in api.calls if path == "/releases" and data)
+    assert payload["body"] == preview["release_body"]
+    assert "Reviewed migration steps." in payload["body"]
+    assert SHA in payload["body"] and "https://example.test/ci/42" in payload["body"]
 
 
-def test_main_advance_while_preparing_notes_stops_release(publisher, api):
+def test_main_advance_while_preparing_notes_stops_release(publisher, api, monkeypatch):
     api.releases = [{"tag_name": TAG, "draft": False, "prerelease": False}]
-    request = api.request
 
-    def advance_main(path, data=None, **kwargs):
-        result = request(path, data, **kwargs)
-        if path == "/releases/generate-notes":
-            api.main = "b" * 40
-        return result
+    def advance_main(*args):
+        api.main = "b" * 40
+        return "Reviewed notes."
 
-    api.request = advance_main
+    monkeypatch.setattr(publisher, "read_release_notes", advance_main)
     with pytest.raises(publisher.ReleaseError, match="main has changed"):
         publisher.release(api, "skills-v1.0.1", SHA, ROOT, publish=True)
     assert not any(path == "/releases" and data is not None for path, data in api.calls)
+
+
+def test_concurrent_tag_creation_stops_before_creating_release(publisher, api):
+    request = api.request
+
+    def race(path, data=None, **kwargs):
+        if path == "/git/refs":
+            # Another publisher wins after the final version check, with a different SHA.
+            api.tags.append(TAG)
+            api.calls.append((path, data))
+            raise publisher.ReleaseError("GitHub API /git/refs: HTTP 422")
+        return request(path, data, **kwargs)
+
+    api.request = race
+    with pytest.raises(publisher.ReleaseError, match="422"):
+        publisher.release(api, TAG, SHA, ROOT, publish=True)
+    writes = [(path, data) for path, data in api.calls if data is not None]
+    assert writes == [("/git/refs", {"ref": f"refs/tags/{TAG}", "sha": SHA})]
+    assert not api.assets
+
+
+@pytest.mark.parametrize("publish", [False, True])
+@pytest.mark.parametrize(
+    "tag", ["skills-v0.0.0", "skills-v0.9.0", "skills-v1.0.1", "skills-v2.0.0"]
+)
+def test_first_version_must_be_exactly_one_zero_zero(publisher, api, tag, publish):
+    api.tags = ["v2.0.8", "skills-v1.0.0-rc.1"]
+    with pytest.raises(publisher.ReleaseError, match="first Skills version"):
+        publisher.release(api, tag, SHA, ROOT, publish=publish)
+    assert all(data is None for _, data in api.calls)
+
+
+@pytest.mark.parametrize("reserved", ["tag", "draft"])
+def test_reserved_first_version_allows_a_higher_version(publisher, api, reserved):
+    if reserved == "tag":
+        api.tags = [TAG]
+    else:
+        api.releases = [{"tag_name": TAG, "draft": True, "prerelease": False}]
+    assert publisher.release(api, "skills-v1.0.1", SHA, ROOT)["published"] is False
+
+
+@pytest.mark.parametrize("publish", [False, True])
+def test_invalid_notes_block_all_remote_writes(publisher, api, monkeypatch, publish):
+    def missing(*args):
+        raise publisher.ReleaseError("Missing reviewed release notes")
+
+    monkeypatch.setattr(publisher, "read_release_notes", missing)
+    with pytest.raises(publisher.ReleaseError, match="Missing reviewed"):
+        publisher.release(api, TAG, SHA, ROOT, publish=publish)
+    assert all(data is None for _, data in api.calls)
+
+
+@pytest.fixture
+def notes_repo(tmp_path):
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args]).decode().strip()
+
+    git("init", "-q")
+    git("config", "core.hooksPath", "/dev/null")
+    git("config", "user.name", "Test")
+    git("config", "user.email", "test@example.invalid")
+    path = tmp_path / "docs/releases" / f"{TAG}.md"
+    path.parent.mkdir(parents=True)
+    path.write_text("Reviewed migration steps.\n", encoding="utf-8")
+    git("add", ".")
+    git("commit", "-qm", "Reviewed notes", "--no-gpg-sign")
+    return tmp_path, path, git
+
+
+def test_notes_use_committed_snapshot_not_worktree(release_module, notes_repo):
+    root, path, git = notes_repo
+    sha = git("rev-parse", "HEAD")
+    path.write_text("Unreviewed local notes.")
+    assert release_module.read_release_notes(root, sha, TAG) == "Reviewed migration steps."
+
+
+@pytest.mark.parametrize("defect", ["untracked", "empty", "symlink"])
+def test_notes_must_be_committed_nonempty_regular_file(release_module, notes_repo, defect):
+    root, path, git = notes_repo
+    if defect == "untracked":
+        git("rm", "--cached", str(path.relative_to(root)))
+    elif defect == "empty":
+        path.write_text(" \n")
+        git("add", ".")
+    else:
+        path.unlink()
+        path.symlink_to("../other.md")
+        git("add", ".")
+    git("commit", "-qm", "Invalid notes", "--no-gpg-sign")
+    with pytest.raises(release_module.ReleaseError, match="notes"):
+        release_module.read_release_notes(root, git("rev-parse", "HEAD"), TAG)
 
 
 def test_api_pagination_reads_beyond_first_page(publisher, monkeypatch):

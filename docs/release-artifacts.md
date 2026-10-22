@@ -5,10 +5,11 @@ GitHub 仓库是源码来源；下游平台负责上架、市场身份/版本映
 ## 发布识别
 
 - 仓库：`VisActor/skills`。
-- 正式 tag：`skills-vMAJOR.MINOR.PATCH`，三个数值均为非负十进制整数，不允许前导零；首个正式版本计划为 `skills-v1.0.0`。
+- 正式 tag：`skills-vMAJOR.MINOR.PATCH`，三个数值均为非负十进制整数，不允许前导零；没有既有正式格式 tag 或 Release 时，发布预检与正式发布都要求首个版本为 `skills-v1.0.0`。中断留下的 tag/草稿会保留该版本号，不允许覆盖。
 - 下游只消费 GitHub Release 中 `draft=false`、`prerelease=false` 且 tag 符合上述规则的版本。当前发布工具不生成预发布版本；预发布后缀、旧 SDK 的 `v*` tag 均不属于本接口。
 - 单独出现 tag 不代表发布完成。发布端先固定 tag 和创建草稿，上传并校验全部附件后才发布 Release。
 - tag、已发布 manifest 和 ZIP 不移动、不复用、不覆盖。更正需要发布新版本。下游发现同一 tag 的 commit 或附件内容变化，应停止并报告。
+- 发布正文读取同一提交中的 `docs/releases/<tag>.md`；预检展示完整正文，缺失或空文件会阻止发布。该维护文件不属于 Skill 包，也不影响 Skill 内容指纹。
 - 发布前的预检与 CI 构建不创建 tag/Release；Actions 的 `skills-release-preview` 也不是正式发布源。
 
 ## 附件与包边界

@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from package_skills import MANIFEST, PackageError, build_artifacts, digest
+from package_skills import MANIFEST, PackageError, build_artifacts, digest, git
 
 TAG_PATTERN = re.compile(r"skills-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", re.ASCII)
 REQUIRED_JOBS = {"Lint and regressions", "Browser smoke (no model)"}
@@ -137,6 +137,8 @@ def check_version(api, tag):
     tags = [item["name"] for item in api.pages("/tags")]
     reserved = tags + [item["tag_name"] for item in releases]
     versions = [version(name) for name in reserved if TAG_PATTERN.fullmatch(name)]
+    if not versions and requested != (1, 0, 0):
+        raise ReleaseError("The first Skills version must be skills-v1.0.0.")
     if versions and requested <= max(versions):
         raise ReleaseError("Choose a version greater than all existing Skills versions.")
     published = [
@@ -147,6 +149,31 @@ def check_version(api, tag):
     return max(published, key=version) if published else None
 
 
+def read_release_notes(root, sha, tag):
+    """Read reviewed notes from the same committed snapshot as the packages."""
+    path = f"docs/releases/{tag}.md"
+    entry = git(root, "ls-tree", "-z", sha, "--", path).rstrip(b"\0")
+    if not entry:
+        raise ReleaseError(f"Missing reviewed release notes in {sha}: {path}")
+    metadata, _ = entry.split(b"\t", 1)
+    mode, kind, oid = metadata.decode().split()
+    if kind != "blob" or mode not in {"100644", "100755"}:
+        raise ReleaseError(f"Release notes must be a regular committed file: {path}")
+    notes = git(root, "cat-file", "blob", oid).decode("utf-8").strip()
+    if not notes:
+        raise ReleaseError(f"Release notes must not be empty: {path}")
+    return notes
+
+
+def render_release_body(notes, repository, tag, sha, ci_url, previous, manifest):
+    body = notes + "\n\n## Release snapshot\n\nIncluded Skills:\n\n"
+    body += "\n".join(f"- `{skill['name']}`" for skill in manifest["skills"])
+    body += f"\n\nSource commit: `{sha}`\n\n[Skills CI]({ci_url})"
+    if previous:
+        body += f"\n\n[Changes since {previous}](https://github.com/{repository}/compare/{previous}...{tag})"
+    return body + "\n"
+
+
 def release(api, tag, sha, root, *, publish=False, output=None):
     version(tag)
     if output is None:
@@ -155,33 +182,20 @@ def release(api, tag, sha, root, *, publish=False, output=None):
     check_main(api, sha)
     previous = check_version(api, tag)
     ci_url = check_ci(api, sha)
+    notes = read_release_notes(root, sha, tag)
     manifest = build_artifacts(root, sha, tag, output, api.repository)
+    body = render_release_body(notes, api.repository, tag, sha, ci_url, previous, manifest)
     result = {
         "tag": tag,
         "sha": sha,
         "previous_tag": previous,
         "ci_url": ci_url,
         "assets": [s["package"]["asset"] for s in manifest["skills"]] + [MANIFEST],
+        "release_body": body,
     }
     if not publish:
         return {**result, "mode": "preflight", "published": False}
 
-    if previous:
-        notes = api.request(
-            "/releases/generate-notes",
-            {
-                "tag_name": tag,
-                "target_commitish": sha,
-                "previous_tag_name": previous,
-            },
-        )["body"]
-    else:
-        skills = [skill["name"] for skill in manifest["skills"]]
-        notes = "First VisActor Skills release. Included Skills:\n\n" + "\n".join(
-            f"- `{name}`" for name in skills
-        )
-        notes += "\n\nHistorical VMind SDK releases remain available separately."
-    notes += f"\n\nSource commit: `{sha}`\n\n[Skills CI]({ci_url})"
     # Recheck immediately before writing; never substitute a newer main commit.
     check_main(api, sha)
     check_version(api, tag)
@@ -194,7 +208,7 @@ def release(api, tag, sha, root, *, publish=False, output=None):
             "tag_name": tag,
             "target_commitish": sha,
             "name": f"VisActor Skills {tag.removeprefix('skills-v')}",
-            "body": notes,
+            "body": body,
             "draft": True,
             "prerelease": False,
         },
@@ -255,7 +269,11 @@ def main():
         print(output)
         if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
             with open(summary, "a") as stream:
-                stream.write(f"## Skills release\n\n```json\n{output}\n```\n")
+                metadata = json.dumps(
+                    {k: v for k, v in result.items() if k != "release_body"}, indent=2
+                )
+                stream.write(f"## Skills release\n\n```json\n{metadata}\n```\n")
+                stream.write("\n## Release body preview\n\n" + result["release_body"])
     except (ReleaseError, PackageError, OSError, UnicodeError) as error:
         print(f"Release stopped: {error}", file=sys.stderr)
         return 1
