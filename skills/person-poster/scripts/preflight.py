@@ -9,11 +9,55 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from importlib.metadata import version
 from pathlib import Path
 from time import perf_counter
+
+
+def probe_driver() -> dict:
+    """Capture a failing driver's public CLI diagnostic without installing anything."""
+    command = [sys.executable, "-m", "playwright", "--version"]
+    report = {"command": command, "passed": False, "returncode": None,
+              "timedOut": False, "outputTruncated": False}
+    stdout = stderr = ""
+    try:
+        result = subprocess.run(command, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=15)
+        report.update(returncode=result.returncode, passed=result.returncode == 0)
+        stdout, stderr = result.stdout, result.stderr
+    except subprocess.TimeoutExpired as error:
+        report.update(timedOut=True, error="Playwright CLI did not finish within 15 seconds")
+        stdout, stderr = error.stdout or "", error.stderr or ""
+    except OSError as error:
+        report["error"] = str(error)
+    for name, value in (("stdout", stdout), ("stderr", stderr)):
+        if isinstance(value, bytes):
+            value = value.decode("utf-8", errors="replace")
+        if len(value) > 4096:
+            report["outputTruncated"] = True
+        report[name] = value[:4096]
+    return report
+
+
+def recovery_action(phase: str) -> str:
+    if phase == "driver-startup":
+        return ("Inspect driverProbe before installing Chromium: the Playwright driver failed to start. "
+                "Use a supported interpreter and an isolated task-local environment as described in "
+                "references/environment.md; rerun preflight and keep that interpreter/environment "
+                "for review and export. Do not patch host caches or copy private runtime packages.")
+    if phase == "browser-launch":
+        return ("The Playwright driver started, but Chromium did not. Inspect the browser error; "
+                "if its executable is missing, install Chromium with the same Python via "
+                "-m playwright install chromium. For system libraries or permissions, follow "
+                "references/environment.md; rerun preflight before generating assets.")
+    if phase == "font-probe":
+        return ("The browser launched but the font/sample probe failed. Inspect the reported error, "
+                "fonts and output-directory permissions, then rerun preflight.")
+    return ("Select Python 3.10+ with the dependencies in scripts/requirements.txt; "
+            "follow references/environment.md and rerun preflight before generating assets.")
 
 
 def main() -> int:
@@ -27,7 +71,7 @@ def main() -> int:
     started = perf_counter()
     report = {"startedAtUtc": datetime.now(timezone.utc).isoformat(),
               "python": {"executable": sys.executable, "version": sys.version.split()[0]},
-              "passed": False, "errors": [], "packages": {}, "timings": {},
+              "passed": False, "failureStage": None, "errors": [], "packages": {}, "timings": {},
               "fontSample": None,
               "notes": ["Font metrics may reflect fallback fonts; visually inspect the sample and current poster.",
                         "This checks environment execution, not data accuracy or total poster-generation time."]}
@@ -40,11 +84,13 @@ def main() -> int:
         except (ImportError, ValueError) as error:
             report["errors"].append(f"Cannot load {package}: {error}")
     report["timings"]["importsSeconds"] = round(perf_counter() - started, 3)
-    phase = "browser-launch"
+    phase = "dependencies"
     if not report["errors"]:
         try:
             from playwright.sync_api import sync_playwright
+            phase = "driver-startup"
             with sync_playwright() as playwright:
+                phase = "browser-launch"
                 mark = perf_counter()
                 browser = playwright.chromium.launch(headless=True)
                 report["timings"]["launchSeconds"] = round(perf_counter() - mark, 3)
@@ -85,9 +131,12 @@ def main() -> int:
                     browser.close()
         except Exception as error:
             report["errors"].append(f"{phase}: {error}")
+            if phase == "driver-startup":
+                report["driverProbe"] = probe_driver()
     report["timings"]["totalSeconds"] = round(perf_counter() - started, 3)
     if not report["passed"]:
-        report["nextAction"] = "Use the selected environment's Python with scripts/requirements.txt and install its Chromium; rerun this probe before generating assets"
+        report["failureStage"] = phase
+        report["nextAction"] = recovery_action(phase)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"passed": report["passed"], "report": str(args.output),
                       "seconds": report["timings"]["totalSeconds"]}, ensure_ascii=False))

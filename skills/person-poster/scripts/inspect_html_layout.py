@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from export_html_png import (
+    DEFAULT_PLAYWRIGHT_PACKAGE,
     append_query_param,
     build_file_url,
     launch_chromium,
@@ -487,7 +488,7 @@ def main() -> int:
     parser.add_argument("--no-screenshot-mode", dest="screenshot_mode", action="store_false")
     parser.add_argument("--install-playwright", action="store_true")
     parser.add_argument("--install-browser", action="store_true")
-    parser.add_argument("--playwright-package", default="playwright")
+    parser.add_argument("--playwright-package", default=DEFAULT_PLAYWRIGHT_PACKAGE)
     parser.add_argument("--pip-user", action="store_true")
     parser.add_argument("--bottom-safe-px", type=int, default=64)
     parser.add_argument("--footer-safe-px", type=int, default=96)

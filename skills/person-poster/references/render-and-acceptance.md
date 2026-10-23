@@ -7,13 +7,7 @@
 - `SKILL_DIR`：`person-poster/` 的实际绝对路径。
 - `BUNDLE`：当前产物目录的实际路径，不能指向两个历史实践的目录。
 
-使用 Python 3.10+；Pillow 用于人物测量，Playwright 与 Chromium 用于浏览器渲染。选择当前可用环境，不硬编码前次实践的 `/tmp` 路径。需要准备独立环境时可执行：
-
-```bash
-python3 -m venv "$BUNDLE/.venv"
-"$BUNDLE/.venv/bin/python" -m pip install -r "$SKILL_DIR/scripts/requirements.txt"
-"$BUNDLE/.venv/bin/python" -m playwright install chromium
-```
+使用 Python 3.10+；Pillow 用于人物测量，Playwright 与 Chromium 用于浏览器渲染。选择当前可用环境，不硬编码前次实践的 `/tmp` 路径。独立环境的 POSIX shell／Windows PowerShell 安装命令、网络和系统依赖见 [运行环境与安装](environment.md)。
 
 后续命令中的 `python3` 替换为所选环境的 Python。`.venv` 是运行环境，不属于可分享的成品文件，不打包到海报中。缺少环境或宿主图片能力时说明具体缺失，并交付已完成的源文件，不声称已导出。
 

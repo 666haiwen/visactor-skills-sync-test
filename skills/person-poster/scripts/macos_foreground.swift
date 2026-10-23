@@ -6,14 +6,24 @@ import CoreImage
 import ImageIO
 
 func run() throws {
-    guard CommandLine.arguments.count == 3 else {
+    // Some launchers forward frontend flags before `--`; only the two script
+    // arguments after that separator are inputs. Normal `swift script ...`
+    // and compiled-binary invocation keep their existing behavior.
+    let arguments = Array(CommandLine.arguments.dropFirst())
+    let inputs: [String]
+    if let separator = arguments.firstIndex(of: "--") {
+        inputs = Array(arguments.dropFirst(separator + 1))
+    } else {
+        inputs = arguments
+    }
+    guard inputs.count == 2 else {
         throw NSError(domain: "Foreground", code: 1, userInfo: [NSLocalizedDescriptionKey: "Usage: swift macos_foreground.swift IMAGE NEW_DIRECTORY"])
     }
     guard #available(macOS 14.0, *) else {
         throw NSError(domain: "Foreground", code: 1, userInfo: [NSLocalizedDescriptionKey: "This optional adapter requires macOS 14+"])
     }
-    let input = URL(fileURLWithPath: CommandLine.arguments[1])
-    let output = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
+    let input = URL(fileURLWithPath: inputs[0])
+    let output = URL(fileURLWithPath: inputs[1], isDirectory: true)
     var isDirectory: ObjCBool = false
     if FileManager.default.fileExists(atPath: output.path, isDirectory: &isDirectory) {
         guard isDirectory.boolValue, try FileManager.default.contentsOfDirectory(atPath: output.path).isEmpty else {

@@ -22,6 +22,7 @@ from pathlib import Path
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 DEFAULT_READY_EXPRESSION = "window.__INFOGRAPHIC_READY__ === true"
+DEFAULT_PLAYWRIGHT_PACKAGE = "playwright>=1.59,<2"
 
 
 class QuietStaticHandler(SimpleHTTPRequestHandler):
@@ -108,7 +109,7 @@ def load_playwright(args):
         print(
             "Error: Python Playwright is not installed.\n"
             "Install it with:\n"
-            "  python3 -m pip install playwright\n"
+            f'  python3 -m pip install "{DEFAULT_PLAYWRIGHT_PACKAGE}"\n'
             "  python3 -m playwright install chromium\n"
             "Or rerun this script with --install-playwright.",
             file=sys.stderr,
@@ -320,7 +321,7 @@ Examples:
     )
     parser.add_argument(
         "--playwright-package",
-        default="playwright",
+        default=DEFAULT_PLAYWRIGHT_PACKAGE,
         help="Package spec passed to pip when --install-playwright is used",
     )
     parser.add_argument(
