@@ -75,7 +75,7 @@ chart-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组�
 
 ## 案例展示
 
-[案例目录](examples/README.md) 已收录 CO₂ 滚动故事和 Las Vegas Web-PPT，包含任务提示词、可获取的输入、最终产物与预览。
+[案例目录](examples/README.md) 已收录 CO₂ 滚动故事、Las Vegas Web-PPT、6组杂志图文案例和4组人物志案例，包含提示词、图片或页面结果，以及输入与复现限制。
 
 ## 开发与维护
 
@@ -132,6 +132,12 @@ uv run ruff check skills tests
 本仓库维护的 Skills 按整个仓库统一管理版本，每次正式发布使用 Git tag 标识包含 Skill 指令、参考资料、模板和脚本的版本快照。VChart 和 VTable Skill 的版本由各自仓库管理。
 
 日常修改通过 Git commit 标识，不需要每次调整 Skill 都创建发布 tag。
+
+正式 Skills 版本使用 `skills-vMAJOR.MINOR.PATCH`：补丁版本用于兼容修复，次版本用于新增 Skill 或兼容能力，主版本用于移除、重命名或不兼容的使用方式调整。
+
+默认安装跟随 `main`，因此可能在正式发版前获取到变化。发布意图写在 `.github/release-plan.json`：面向 main 的 PR 自动预检，合并一个发生变化且非空的版本计划后，等待 main CI 通过再自动发布。`version: null` 或版本未变化时不发版。发布后保留计划文件，不自动清空，后续合并不会因此重复发布。具体操作见[发布流程](CONTRIBUTING.md#publishing-skills)，已发布版本见 [Releases](https://github.com/VisActor/skills/releases)。
+
+正式 Skills Release 附带 `skills-manifest.json` 和每个 Skill 的独立 ZIP。下游分发平台可通过清单里的内容指纹判断哪些 Skill 发生变化，无需让各 Skill 跟随仓库版本一起更新。具体格式见[发布产物接口](docs/release-artifacts.md)。
 
 反馈问题或复现结果时，请记录发布 tag 或 commit SHA；分支内容会随开发变化。VTable `1.26.8` 等依赖版本表示底层库的版本，不是 Skill 的发布版本。历史 VMind SDK 的 tag 保持不变，仍归属于原 SDK。
 

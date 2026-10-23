@@ -75,7 +75,7 @@ Generated JavaScript/HTML is executable code. Preview your own or reviewed artif
 
 ## Examples
 
-The [example gallery](examples/README.md) includes a CO₂ scrolling story and a Las Vegas Web-PPT, with prompts, available inputs, final artifacts and previews.
+The [example gallery](examples/README.md) includes a CO₂ scrolling story, a Las Vegas Web-PPT, six editorial-magazine collections and four life-chronicle collections. Each case links its prompts and results and explains the available inputs and reproduction limits.
 
 ## Development and maintenance
 
@@ -132,6 +132,12 @@ Fixed tasks currently cover chart-storytelling; browser smoke covers its HTML st
 Skills maintained here are versioned together at repository level. Each formal Skills release is identified by a Git tag covering the Skill instructions, references, templates and scripts. VChart and VTable Skill versions are managed by their respective repositories.
 
 Ordinary edits are identified by Git commits; each Skill change does not require a release tag.
+
+Formal Skills releases use `skills-vMAJOR.MINOR.PATCH`: patch versions contain compatible fixes, minor versions add Skills or compatible capabilities, and major versions cover removals, renames or incompatible usage changes.
+
+Default installations follow `main`, so they can receive changes before a formal release. Maintainers declare release intent in `.github/release-plan.json`. Main PRs automatically preview changed release plans; merging a changed non-null version authorizes automatic publication after main CI passes. Null or unchanged plans do not publish. The plan is retained after publication, so later merges do not republish it. See the [release procedure](CONTRIBUTING.md#publishing-skills) and [published releases](https://github.com/VisActor/skills/releases).
+
+Each formal Skills Release includes `skills-manifest.json` and one ZIP per Skill. Distributors can use the manifest's per-Skill content fingerprints to identify changes independently of repository versions. See the [artifact contract](docs/release-artifacts.md).
 
 Use a release tag or commit SHA to identify the version when reporting an issue or reproducing a result; branch contents can change. Dependency versions such as VTable `1.26.8` identify the underlying library, not the Skill release. Historical VMind SDK tags remain unchanged and belong to the earlier SDK.
 

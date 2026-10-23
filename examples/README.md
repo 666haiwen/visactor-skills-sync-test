@@ -9,6 +9,26 @@
 | [全球 CO₂ 数据故事](chart-storytelling/global-co2/README.md) | 暗色滚动叙事、排放与温升视角、分步图表 | OWID 数据；仅保留部分输入，无法完整重新生成 |
 | [Las Vegas Web-PPT](chart-storytelling/las-vegas-web-ppt/README.md) | 14 张网页幻灯片、商业分析图表、章节转场 | 模拟演示数据，不是真实赛事经营结果 |
 
+## editorial-magazine
+
+| 案例 | 展示能力 | 输入说明 |
+| --- | --- | --- |
+| [秋日穿搭指南](editorial-magazine/autumn-outfits/README.md) | 多套穿搭总览与单套拆解，统一中性背景、服装抠图与配色说明。 | 图片快照；原始素材及可编辑源稿未附 |
+| [威海旅行手册](editorial-magazine/weihai-travel/README.md) | 风景填字封面、文化介绍与逐日路线图。 | 图片快照；原始素材及可编辑源稿未附 |
+| [四类新闻资讯排版](editorial-magazine/news-digest/README.md) | 股市、娱乐、民生与科技的报刊式信息组织：主新闻、配图、分栏与简讯。 | 图片快照；原始素材及可编辑源稿未附 |
+| [孙宇晨人物生平组图](editorial-magazine/justin-sun-biography/README.md) | 人物全景主图与多图详情，兼顾连续正文、经历、代表项目与社会活动。 | 图片快照；原始素材及可编辑源稿未附 |
+| [情感夜读：原帖选读](editorial-magazine/opinion-editorial/README.md) | 保留原文的观点编辑与多页专题，使用统一色调、栏目标题和长文阅读版式。 | 图片快照；原始素材及可编辑源稿未附 |
+| [名人爱情故事：按时间展开](editorial-magazine/love-story-sequence/README.md) | 以贝克汉姆夫妇为例，用概览页与逐节点图文组织时序叙事。 | 图片快照；原始素材及可编辑源稿未附 |
+
+## life-chronicle
+
+| 案例 | 展示能力 | 输入说明 |
+| --- | --- | --- |
+| [居里夫人三种版式](life-chronicle/marie-curie-layouts/README.md) | 照片墙、中心网格、环形叙事 | 本地渲染；复现提示词与公开资料入口 |
+| [游本昌：竖版照片墙人物志](life-chronicle/you-benchang/README.md) | 人物抠图与事件图文编排 | 历史生成结果；提示词与复现限制见案例 |
+| [大 S：横版照片墙人物志](life-chronicle/barbie-hsu/README.md) | 人物抠图与事件图文编排 | 历史生成结果；提示词与复现限制见案例 |
+| [刘欢：竖版环形人物志](life-chronicle/liu-huan/README.md) | 人物抠图与事件图文编排 | 历史生成结果；提示词与复现限制见案例 |
+
 ## 案例结构
 
 新增案例按 `examples/<skill-name>/<case-name>/` 组织，Skill 名与运行目录一致。
