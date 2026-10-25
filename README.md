@@ -36,9 +36,8 @@ Run these commands in the project where you want to use the Skills:
 npx skills add VisActor/skills --skill chart-storytelling
 npx skills add VisActor/skills --skill editorial-magazine
 npx skills add VisActor/skills --skill life-chronicle
+npx skills add VisActor/skills --skill person-poster
 ```
-
-`person-poster` is available from a checkout containing this Skill: `npx skills add ./skills/person-poster`. The default-branch command `npx skills add VisActor/skills --skill person-poster` becomes available after promotion to `main`; a release tag is not required for default-branch installation.
 
 For chart and table tasks, install the related Skills from their owning repositories:
 
