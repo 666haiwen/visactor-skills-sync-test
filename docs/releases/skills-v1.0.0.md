@@ -1,67 +1,45 @@
-# VisActor Skills 1.0.0
+# VisActor Skills 1.1.0
 
-This is the first repository-level Skills release, separate from the historical
-VMind SDK versions. It establishes a fixed snapshot of the three Skills already
-available on `main`; this release does not change their runtime instructions,
-templates or scripts relative to the preceding `main` snapshot.
+This release adds `person-poster`. The runtime contents of `chart-storytelling`,
+`editorial-magazine` and `life-chronicle` are unchanged from 1.0.0.
 
-## Capabilities
+## New capabilities
 
-- **chart-storytelling**: HTML data stories and Web-PPT presentations, including
-  chart-based scrollytelling and annotations.
-- **editorial-magazine**: editable magazine-style HTML and PNG sequences for
-  news, biographies, travel, outfits and other editorial stories.
-- **life-chronicle**: biography posters with photo-wall, center-grid and
-  photo-ring layouts, plus editable timelines.
-- Curated examples now include six magazine cases and four biography cases,
-  alongside the existing CO2 story and Las Vegas Web-PPT examples.
-- Each Release supplies `skills-manifest.json` and one self-contained ZIP per
-  Skill. Per-Skill content fingerprints allow distributors to identify changes
-  independently of the repository version.
+- Create person-led data posters with native VChart specifications, editable
+  HTML and high-resolution PNG output.
+- Prepare subject images, check runtime dependencies, inspect layout, review
+  chart evidence and validate the delivered bundle using bundled scripts.
+- Choose HTML-only delivery with `manifest.delivery: "html"`; the default
+  `html+png` delivery requires the final PNG.
+- Install with `npx skills add VisActor/skills --skill person-poster`, or use
+  the complete `person-poster.zip` from this Release.
 
-## Release workflow fixes
+## Fixes
 
-- Publication requires successful CI for the exact `main` commit and an unused
-  Skills version. Explicit tag creation prevents silently reusing a tag created
-  concurrently by another publisher.
-- Main PRs automatically preview the full reviewed release notes and packages.
-  A changed non-null `.github/release-plan.json` authorizes automatic
-  publication after the final main commit passes CI; no manual dispatch is
-  required. The plan remains in Git and unchanged plans do not republish. Packages are uploaded to
-  a draft and verified before the Release becomes available to consumers.
+- Person-poster validation detects text clipped by ancestor containers and
+  reports rendering or export failures instead of accepting incomplete output.
+- Dimension synchronization avoids increasing the canvas on repeated runs
+  with unchanged content and rejects unsupported CSS dimension expressions.
 
-## Migration
+## Breaking changes and migration
 
-There are no additional Skill renames, removals or runtime changes relative to
-the preceding `main` snapshot. Users moving from older repository snapshots
-should account for these earlier changes:
-
-- If `data-storytelling` is installed, remove that installed copy through your
-  Skill manager, install `chart-storytelling`, and update prompts or local
-  configuration that refer to the former name.
-- VChart and VTable Skills are maintained in `VisActor/VChart` and
-  `VisActor/VTable`. Replace old copies from this repository with the upstream
-  `vchart-development-assistant` and `vtable-development-assistant` Skills;
-  they are not included in this release's packages.
-- This release is not a VMind SDK upgrade. Existing SDK users should continue
-  using their historical SDK release; the Skills repository does not provide
-  an SDK compatibility layer.
-
-For installation commands and runtime dependencies, see the
-[README at this version](https://github.com/VisActor/skills/blob/skills-v1.0.0/README.md).
-Keep the complete Skill directory, including its references, templates and
-scripts, when installing from a ZIP. Record the tag or commit when reproducing
-results; default branch installations can receive subsequent changes.
+No changes are required for users of the three Skills released in 1.0.0.
+For earlier person-poster prototypes using `charts[].schema`, convert each
+chart to a native VChart `charts[].spec` and render it again; renaming a file
+extension is not sufficient. PNG remains the default delivery format.
 
 ## Known limitations
 
-- Skills require a capable host Agent and its model/tool access. This repository
-  does not supply a hosted Agent service or a model API harness.
-- Browser previews, external libraries/fonts, image retrieval and image
-  generation depend on the requirements of the selected Skill and host.
-  Web-PPT is a browser presentation, not a `.pptx` export.
-- CI checks deterministic regressions and chart-storytelling browser smoke; it
-  does not evaluate model-generated output quality. Editorial-magazine and
-  life-chronicle have script regressions but no fixed browser smoke coverage.
-- Release artifacts define the distribution interface. Automatic publication
-  to third-party Skill platforms is not part of this release.
+- Person-poster requires Python 3.10+, Pillow and Python Playwright with
+  Chromium. Chart rendering uses VChart 2.1.7 from its public CDN or a sourced
+  local copy. Follow the Skill's environment instructions for setup.
+- Image retrieval, generation and background removal depend on host tools;
+  installing the Skill does not provide those services.
+- Deterministic checks and browser smoke cover technical behavior, not factual
+  accuracy or visual quality. The fixed Marie Curie task has one recorded
+  same-session generation check, not an independent blind evaluation.
+- Complex rotation, clip-path and mask effects still require visual review.
+- AgentBuddy synchronization is a separate downstream workflow. This GitHub
+  release does not itself create or update AgentBuddy entries.
+
+This release belongs to the isolated 666haiwen/visactor-skills-sync-test fork. It is solely for release and AgentBuddy synchronization validation, not a VisActor production release.
