@@ -82,7 +82,7 @@ chart-storytelling 由当前 Agent 生成 VSeed 配置，再用本地脚本组�
 
 ## 开发与维护
 
-本节面向需要修改 Skills 或运行本地测试的贡献者。默认分支 `main` 提供面向用户的稳定版本；日常开发和贡献 PR 使用 `develop`，经过验证后通过 `develop` → `main` 的 PR 发布。请先阅读 [贡献指南](CONTRIBUTING.md)。
+本节面向需要修改 Skills 或运行本地测试的贡献者。默认分支 `main` 提供面向用户的稳定版本；日常开发和贡献 PR 使用 `develop`，发版时从最新 `develop` 拉发布分支，补充发布单和说明后，直接通过一个 PR 合入 `main`。请先阅读 [贡献指南](CONTRIBUTING.md)。
 
 ### 仓库结构
 

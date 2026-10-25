@@ -82,7 +82,7 @@ The [example gallery](examples/README.md) includes a CO₂ scrolling story, a La
 
 ## Development and maintenance
 
-This section is for contributors editing Skills or running local tests. The default branch, `main`, contains the user-facing stable version. Day-to-day development and contribution PRs use `develop`; reviewed updates are published through a `develop` → `main` PR. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+This section is for contributors editing Skills or running local tests. The default branch, `main`, contains the user-facing stable version. Day-to-day development and contribution PRs use `develop`; release preparation is committed on a branch from the latest `develop` and reviewed in one PR directly to `main`. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Repository layout
 
